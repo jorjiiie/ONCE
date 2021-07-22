@@ -1,15 +1,20 @@
 
+
 public class Transaction 
 {
 	public static final int CONFIRMATION_THRESHOLD = 1;
 	private int sender,reciever;
 	private int send_count; // how many times the sender has made a transaction lol this is so bad
 	private long amount;
+
 	// somehow implement signature too idk how to do this yet
 	// will auto reject if its not confirmed but it wont check outside of that
+	// clients job^
+
 
 	private int confirmations;
 	private byte[] hash;
+	private byte[] sig;
 
 
 	public Transaction()
@@ -73,6 +78,8 @@ public class Transaction
 		MerkleTree m = new MerkleTree(t);
 		System.out.println(m);
 
+		// find out if p-256 is there lol
+		// System.out.println(Security.getProviders("AlgorithmParameters.EC")[0].getService("AlgorithmParameters", "EC").getAttribute("SupportedCurves"));
 
 	}
 

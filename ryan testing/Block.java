@@ -51,15 +51,7 @@ public class Block
 	{
 		return previous_block;
 	}
-	public boolean set_hash()
-	{
-		try {
-			hash();
-			return true;
-		}
-		return false;
 
-	}
 
 	public boolean hash()
 	{
