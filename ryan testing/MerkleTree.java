@@ -11,10 +11,19 @@ public class MerkleTree
 
 	public MerkleTree(ArrayList<Transaction> leafs)
 	{
-		ArrayList<byte[]> hashes = new ArrayList<byte[]>(leafs.size());
+		ArrayList<byte[]> hashes = new ArrayList<byte[]>();
 		for (int i=0;i<leafs.size();i++)
 		{
 			hashes.set(i,leafs.get(i).getHash());
+		}
+		buildTree(hashes);
+	}
+	public MerkleTree(Transaction[] leafs)
+	{
+		ArrayList<byte[]> hashes = new ArrayList<byte[]>();
+		for (int i=0;i<leafs.length;i++)
+		{
+			hashes.add(i,leafs[i].getHash());
 		}
 		buildTree(hashes);
 	}
@@ -22,26 +31,50 @@ public class MerkleTree
 	{
 		// constructs tree with leafHash array
 		// make sure its even
-		leaf_count = leafHash.size() | 1;
+		// copy last if its odd
+		if (leafHash.size() % 2 == 1)
+			leafHash.add(leafHash.get(leafHash.size()-1));
+
+		leaf_count = leafHash.size();
 		nodes = new Node[leaf_count * 2];
-		for (int i=leaf_count+1; i<leaf_count*2;i++) nodes[i] = new Node(leafHash.get(i));
-		for (int i=leaf_count;i>0;i--)
+
+		for (int i=leaf_count; i<leaf_count*2;i++) 
+		{
+			nodes[i] = new Node(leafHash.get(i-leaf_count));
+		}
+
+		System.out.println(nodes.length);
+
+
+		for (int i=leaf_count-1;i>0;i--)
 		{
 			nodes[i] = new Node(nodes[i*2], nodes[i*2+1]);
 		}	
+		node_count = nodes.length;
 	}
 	public String toString()
 	{
 		String ret  = "";
 		ret += "size: " + node_count + "\nLeaf Count: " + leaf_count + "\n";
 		// put nodes togehter somehow	
-		for (int i=1;i<=node_count;i++)
+		for (int i=1;i<node_count;i++)
 		{
 			ret += "Node " + i + ": " + nodes[i] + "\n";
 		}
 		return ret;
 	}
 
+	public byte[] getRootHash()
+	{
+		return nodes[1].hash;
+	}
+	public byte[] getHash(int n)
+	{
+		if (n < 0 || n >= node_count) 
+			throw new java.lang.RuntimeException("Requested node of MerkleTree is out of bounds (Index" + n + " for tree of size " + node_count + ")");
+		
+		return nodes[n].hash;
+	}
 	static class Node
 	{
 		public boolean isLeaf;
@@ -61,12 +94,12 @@ public class MerkleTree
 			// combine hashes
 			byte[] combinedHash = new byte[64];
 			for (int i=0;i<32;i++) combinedHash[i] = l.hash[i];
-			for (int i=32;i<64;i++) combinedHash[i] = r.hash[i];
+			for (int i=32;i<64;i++) combinedHash[i] = r.hash[i-32];
 			this.hash = HashUtils.hash(combinedHash);
 		}
 		public String toString()
 		{
-			return "Leaf: " + isLeaf + HashUtils.byteToHex(hash);
+			return "Leaf: " + isLeaf + " " + HashUtils.byteToHex(hash);
 		}		
 	}
 

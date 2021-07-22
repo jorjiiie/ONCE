@@ -43,8 +43,7 @@ public class Transaction
 	}
 	public void hash()
 	{
-		String tmp = "" + sender + reciever + send_count + amount;
-		hash = HashUtils.hash(tmp);
+		hash = HashUtils.hash("" + sender + reciever + send_count + amount);
 	}
 	public byte[] getHash()
 	{
@@ -55,10 +54,26 @@ public class Transaction
 		return String.format("Send %d from %d to %d with hash %s (id %d conf# %d)", amount, sender, reciever, HashUtils.byteToHex(hash),send_count,confirmations);
 
 	}
+	public static int randInt(int m)
+	{
+		return (int) (Math.random() * m);
+	}
 	public static void main(String[] args)
 	{
 		Transaction carl = new Transaction(1, 2, 69, 1);
-		System.out.println(carl);
+		// System.out.println(carl);
+
+		int n = 4;
+		Transaction t[] = new Transaction[n];
+		for (int i=0;i<n;i++)
+		{
+			t[i] = new Transaction(randInt(10),randInt(10),randInt(10),randInt(10));
+			System.out.println(t[i]);
+		}
+		MerkleTree m = new MerkleTree(t);
+		System.out.println(m);
+
+
 	}
 
 

@@ -9,10 +9,11 @@ public class Block
 	private int miner_id;
 
 	private Transaction[] transactions;
+	private MerkleTree m;
 	
 	// no idea how to make unique ids LOL
 	// how to uniquely hash?
-	private int[] hash,previous_block;
+	private byte[] block_hash,previous_block;
 
 	public Block()
 	{
