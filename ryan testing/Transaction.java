@@ -1,9 +1,9 @@
+import java.security.*;
 
+public class Transaction extends CRYPTO implements java.io.Serializable {
 
-public class Transaction 
-{
 	public static final int CONFIRMATION_THRESHOLD = 1;
-	private int sender,reciever;
+	private PublicKey sender,reciever;
 	private int send_count; // how many times the sender has made a transaction lol this is so bad
 	private long amount;
 
@@ -17,21 +17,21 @@ public class Transaction
 	private byte[] sig;
 
 
-	public Transaction()
-	{
+	public Transaction() {
+		super(101010);
 		// joe
-		sender = 0;
 	}
-	public Transaction(int s, int r, int amt, int s_cnt)
-	{
+	public Transaction(PublicKey s, PublicKey r, int amt, int s_cnt) {
+		super(101010);
 		sender = s;
 		reciever = r;
 		amount = amt;
 		send_count=s_cnt;
 		hash();
 	}
-	public Transaction(Transaction o)
-	{
+	public Transaction(Transaction o) {
+		// i dont think we need this
+		super(101010);
 		this.sender = o.sender;
 		this.reciever = o.reciever;
 		this.confirmations = o.confirmations;
@@ -41,46 +41,33 @@ public class Transaction
 			this.hash[i]=o.hash[i];
 		}
 	}
-
-	public void inc_confirmations()
-	{
+	public void inc_confirmations() {
 		confirmations++;
 	}
-	public void hash()
-	{
+	public void hash() {
 		hash = HashUtils.hash("" + sender + reciever + send_count + amount);
 	}
-	public byte[] getHash()
-	{
+	public byte[] getHash() {
 		return hash;
 	}
-	public String toString()
-	{
-		return String.format("Send %d from %d to %d with hash %s (id %d conf# %d)", amount, sender, reciever, HashUtils.byteToHex(hash),send_count,confirmations);
+	public String toString() {
 
+		return "Sender: " + sender + "\nReciever: " + reciever + "\nAmount: " + amount + "\nSend ID: " + send_count + "\nHash: " + HashUtils.byteToHex(hash) + "\nSignature: " + HashUtils.byteToHex(sig);
 	}
-	public static int randInt(int m)
-	{
-		return (int) (Math.random() * m);
+	public boolean setSignature(byte[] signature) {
+		if (sig!=null) return false;
+		sig = signature;
+		return true;
 	}
-	public static void main(String[] args)
-	{
-		Transaction carl = new Transaction(1, 2, 69, 1);
-		// System.out.println(carl);
+	public static void main(String[] args) {
 
-		int n = 4;
-		Transaction t[] = new Transaction[n];
-		for (int i=0;i<n;i++)
-		{
-			t[i] = new Transaction(randInt(10),randInt(10),randInt(10),randInt(10));
-			System.out.println(t[i]);
-		}
-		MerkleTree m = new MerkleTree(t);
-		System.out.println(m);
+		User carl = new User();
+		carl.initUser();
+		User joe = new User();	
+		joe.initUser();
 
-		// find out if p-256 is there lol
-		// System.out.println(Security.getProviders("AlgorithmParameters.EC")[0].getService("AlgorithmParameters", "EC").getAttribute("SupportedCurves"));
-
+		Transaction t = carl.sendTo(joe,15);
+		System.out.println(t);
 	}
 
 

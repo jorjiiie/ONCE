@@ -2,7 +2,7 @@
 // no idea what i'm doign so i'm replacing hashes and everything cipher-y with ints for now
 // job of the block isn't to see if it's valid or not
 // that is the job of the client/transaction being compiled into a block
-public class Block
+public class Block 
 {
 
 	private int height;
