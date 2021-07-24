@@ -43,7 +43,7 @@ public class MerkleTree
 			nodes[i] = new Node(leafHash.get(i-leaf_count));
 		}
 
-		System.out.println(nodes.length);
+		//System.out.println(nodes.length);
 
 
 		for (int i=leaf_count-1;i>0;i--)
@@ -72,7 +72,7 @@ public class MerkleTree
 	{
 		if (n < 0 || n >= node_count) 
 			throw new java.lang.RuntimeException("Requested node of MerkleTree is out of bounds (Index" + n + " for tree of size " + node_count + ")");
-		
+
 		return nodes[n].hash;
 	}
 	static class Node

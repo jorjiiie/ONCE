@@ -15,7 +15,8 @@ public class Block extends CRYPTO implements java.io.Serializable
 
 	private Transaction[] transactions;
 	private MerkleTree mTree;
-	
+	private byte[] mRoot;	
+	private String mRootHex;
 	// no idea how to make unique ids LOL
 	// how to uniquely hash?
 	private byte[] blockHash,previous_block;
@@ -31,6 +32,8 @@ public class Block extends CRYPTO implements java.io.Serializable
 		transactions = t;
 		previous_block = p_block;
 		mTree = new MerkleTree(t);
+		mRoot = mTree.getRootHash();
+		mRootHex = HashUtils.byteToHex(mRoot);
 	}
 
 	public void set_height(int h) {
@@ -60,12 +63,11 @@ public class Block extends CRYPTO implements java.io.Serializable
 	}
 	public boolean hash() {
 		try {
-			timeStamp = System.currentTimeMillis();
+			timeStamp = System.nanoTime();
 			// simulate rnadom by just doing timestamp^2 + 1
 			randNumber = (int) (timeStamp * (int)(Math.random() * 420));
 
-			String toHash = "" + timeStamp + randNumber  + HashUtils.byteToHex(mTree.getRootHash());
-			blockHash = HashUtils.hash(toHash);
+			blockHash = HashUtils.hash("" + timeStamp + randNumber + mRootHex);
 			return true;
 		} catch(Exception e) {
 			return false;
@@ -78,7 +80,7 @@ public class Block extends CRYPTO implements java.io.Serializable
 
 	}
 	public boolean less(int n) {
-		int current = 0;
+		int current = 256;
 		outer:
 			for (int i=0;i<32;i++) {
 				for (int j=0;j<8;j++) {
@@ -105,12 +107,20 @@ public class Block extends CRYPTO implements java.io.Serializable
 
 
 		// uwu mining
+		long HASHES = 50000000L;
+		int found = 0;
+		long start = System.currentTimeMillis();
 		Block b = new Block(1, t, null);
-		for (int i=0;i<50000000;i++) {
+		for (long i=0;i<HASHES;i++) {
 			b.hash();
-			if (b.less(23)) {
+			if (b.less(20)) {
 				System.out.println("num: " + i + " HASH: " + HashUtils.byteToHex(b.getHash()));
+				found++;
 			}
 		}
+		long end = System.currentTimeMillis();
+		System.out.println(HASHES + " hashes took " + (end-start) + " ms, or about " + HASHES*1000.0/(end-start) + " hashes per second");
+		System.out.println((end-start)/1000.0/found +" seconds per hash (" + found + ")");
+
 	}
 }

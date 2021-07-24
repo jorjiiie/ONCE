@@ -55,7 +55,7 @@ public class Transaction extends CRYPTO implements java.io.Serializable {
 		return "Sender: " + sender + "\nReciever: " + reciever + "\nAmount: " + amount + "\nSend ID: " + send_count + "\nHash: " + HashUtils.byteToHex(hash) + "\nSignature: " + HashUtils.byteToHex(sig);
 	}
 	public boolean setSignature(byte[] signature) {
-		if (sig!=null) return false;
+		if (sig==null) return false;
 		sig = signature;
 		return true;
 	}
