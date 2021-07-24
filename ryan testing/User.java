@@ -3,6 +3,7 @@ import java.security.spec.ECGenParameterSpec;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+// do we serialize this idk
 public class User 
 {
 	// will remove later obviously
@@ -89,6 +90,7 @@ public class User
 	}
 	public Transaction sendTo(User other, int amount) {
 		// won't check if user has enough bc it's stored in blockchain not in the class
+		// this func is just for testing
 		Transaction t = new Transaction(publicKey, other.publicKey,amount,++actions);
 
 		t.setSignature(sign(t));

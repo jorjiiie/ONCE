@@ -3,6 +3,7 @@ import java.util.HashMap;
 
 public class Client
 {
+	//
 	// should prob write to a file 
 	// but for now we'll just have a hashset
 	private 
