@@ -80,7 +80,7 @@ public class Block extends CRYPTO implements java.io.Serializable
 		outer:
 			for (int i=0;i<32;i++) {
 				for (int j=7;j>=0;j--) {
-					if (((blockHash[i]) & (1 << j) != 0)) {
+					if (((blockHash[i] & (1 << j)) != 0)) {
 						current = i*8 + (7-j);
 						break outer;
 					}
