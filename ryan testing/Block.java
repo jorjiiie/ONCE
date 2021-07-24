@@ -7,27 +7,26 @@ public class Block extends CRYPTO implements java.io.Serializable
 {
 
 	private int height;
-	private long seed;
-	private int nxt;
+
 	private long timeStamp;
 	private int randNumber;
 	private PublicKey miner_id;
 
 	private Transaction[] transactions;
+
 	private MerkleTree mTree;
 	private byte[] mRoot;	
 	private String mRootHex;
 	// no idea how to make unique ids LOL
 	// how to uniquely hash?
 	private byte[] blockHash,previous_block;
-
+	private String previousHash;
 	public Block() {
 		super(2);
 		height = -1;
 	}
 	public Block(int h, Transaction[] t, byte[] p_block) {
 		super(2);
-		seed = System.currentTimeMillis();
 		height = h;
 		transactions = t;
 		previous_block = p_block;
@@ -57,14 +56,11 @@ public class Block extends CRYPTO implements java.io.Serializable
 	public byte[] get_previous() {
 		return previous_block;
 	}
-	private int quickRandom() {
-		nxt = (int) (seed * nxt * nxt + 1);
-		return nxt;
-	}
+
 	public boolean hash() {
 		try {
 			timeStamp = System.nanoTime();
-			// simulate rnadom by just doing timestamp^2 + 1
+			// simulate rnadom by just doing 
 			randNumber = (int) (timeStamp * (int)(Math.random() * 420));
 
 			blockHash = HashUtils.hash("" + timeStamp + randNumber + mRootHex);
@@ -83,9 +79,9 @@ public class Block extends CRYPTO implements java.io.Serializable
 		int current = 256;
 		outer:
 			for (int i=0;i<32;i++) {
-				for (int j=0;j<8;j++) {
-					if (((blockHash[i] >> j) & 1) != 0) {
-						current = i*8 + j;
+				for (int j=7;j>=0;j--) {
+					if (((blockHash[i]) & (1 << j) != 0)) {
+						current = i*8 + (7-j);
 						break outer;
 					}
 				}
@@ -113,7 +109,7 @@ public class Block extends CRYPTO implements java.io.Serializable
 		Block b = new Block(1, t, null);
 		for (long i=0;i<HASHES;i++) {
 			b.hash();
-			if (b.less(20)) {
+			if (b.less(23)) {
 				System.out.println("num: " + i + " HASH: " + HashUtils.byteToHex(b.getHash()));
 				found++;
 			}

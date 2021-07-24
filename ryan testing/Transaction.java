@@ -3,6 +3,7 @@ import java.security.*;
 public class Transaction extends CRYPTO implements java.io.Serializable {
 
 	public static final int CONFIRMATION_THRESHOLD = 1;
+
 	private PublicKey sender,reciever;
 	private int send_count; // how many times the sender has made a transaction lol this is so bad
 	private long amount;
@@ -13,6 +14,7 @@ public class Transaction extends CRYPTO implements java.io.Serializable {
 
 
 	private int confirmations;
+	
 	private byte[] hash;
 	private byte[] sig;
 
