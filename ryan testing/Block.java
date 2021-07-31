@@ -5,9 +5,11 @@ import java.security.*;
 // that is the job of the client/transaction being compiled into a block
 public class Block extends CRYPTO implements java.io.Serializable
 {
-
+	private static double versionNumber = 1.0;
+	private static String bits = "18ffffff"; // I dont wanna deal with datatypes
+	
 	private int height;
-
+	
 	private long timeStamp;
 	private int randNumber;
 	private PublicKey miner_id;
@@ -56,14 +58,34 @@ public class Block extends CRYPTO implements java.io.Serializable
 	public byte[] get_previous() {
 		return previous_block;
 	}
+	
+	public String getTarget() // targets should be 48 characters / 24 bytes. First 3 bytes are replaced by the coefficient of the bits
+	{
+		int numTimes = Integer.parseInt(bits.substring(0, 2), 16) - 3; // accounts for first 3 bytes
+		String concatPre = "";
+		
+		for (int i = 0; i < 42 - numTimes * 2; i++) // the first 2 characters denote the number of "bytes" that are 0
+		{
+			concatPre += '0';
+		}
+		
+		String concatSuf = "";
+		for (int i = 0; i < numTimes * 2; i++)
+		{
+			concatSuf += '0';
+		}
+		return concatPre + bits.substring(2, 8) + concatSuf;
+		//return bits % 0x1000000L * ((long)(Math.pow(0x10, bits / 0x100000000L * 16 + bits / 0x10000000L)));
+	}
 
 	public boolean hash() {
 		try {
-			timeStamp = System.nanoTime();
-			// simulate rnadom by just doing 
-			randNumber = (int) (timeStamp * (int)(Math.random() * 420));
+			timeStamp = System.currentTimeMillis() / 1000L;
+			// simulate random by just doing 
+			randNumber = (int) (Math.random() * 420); 
+			// we just do random instead of using nonces
 
-			blockHash = HashUtils.hash("" + timeStamp + randNumber + mRootHex);
+			blockHash = HashUtils.hash("" + versionNumber + get_previous() + mRootHex + timeStamp + getTarget() + randNumber);
 			return true;
 		} catch(Exception e) {
 			return false;
