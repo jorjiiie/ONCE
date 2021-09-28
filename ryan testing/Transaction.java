@@ -58,8 +58,12 @@ public class Transaction extends CRYPTO implements java.io.Serializable {
 	}
 	public boolean setSignature(byte[] signature) {
 		if (sig==null) return false;
+		System.out.println("sig set\n");
 		sig = signature;
 		return true;
+	}
+	public byte[] getSignature() {
+		return sig;
 	}
 	public static void main(String[] args) {
 
@@ -69,6 +73,7 @@ public class Transaction extends CRYPTO implements java.io.Serializable {
 		joe.initUser();
 
 		Transaction t = carl.sendTo(joe,15);
+		System.out.println(carl.verify(t.getSignature(), HashUtils.byteToHex(t.getHash())));
 		System.out.println(t);
 	}
 
