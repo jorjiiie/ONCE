@@ -68,10 +68,9 @@ public class Block extends CRYPTO implements java.io.Serializable
 
 	public boolean hash() {
 		try {
-			timeStamp = System.currentTimeMillis() / 1000L; // is epoch time
+			timeStamp = System.currentTimeMillis();
 			// simulate random by just doing 
 			randNumber = (int) (Math.random() * 420); 
-			// we just do random instead of using nonces
 
 			blockHash = HashUtils.hash("" + versionNumber + previousHash + mRootHex + timeStamp+ randNumber);
 
@@ -139,7 +138,7 @@ public class Block extends CRYPTO implements java.io.Serializable
 		Block b = new Block(1, t, null);
 		for (long i=0;i<HASHES;i++) {
 			b.hash();
-			if (b.less(20)) {
+			if (b.less(10)) {
 				System.out.println("num: " + i + " HASH: " + HashUtils.byteToHex(b.getHash()));
 				found++;
 			}
