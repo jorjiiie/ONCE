@@ -36,7 +36,7 @@ public class Client
 
 		Block b = new Block(0, t, null);
 
-		b.startHash(5);
+		b.startHash(15);
 
 		HashMap<byte[], Block> chain = new HashMap<byte[], Block>();
 		
@@ -54,8 +54,7 @@ public class Client
 			Block currentBlock = new Block(chain.get(previousBlock).getHeight()+1, t, previousBlock);
 
 			do {
-				currentBlock.startHash(5);
-			
+				currentBlock.startHash(15);
 			} while (chain.containsKey(currentBlock.getHash()));
 
 			chain.put(currentBlock.getHash(),currentBlock);
@@ -63,6 +62,10 @@ public class Client
 			previousBlock = currentBlock.getHash();
 		}
 
+		while (previousBlock != null) {
+			System.out.println(HashUtils.byteToHex(previousBlock));
+			previousBlock = chain.get(previousBlock).get_previous();
+		}
 		// for (Block bb : chain.values()) {
 		// 	System.out.println(bb);
 		// }
