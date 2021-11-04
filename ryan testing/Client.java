@@ -1,9 +1,49 @@
 import java.util.HashMap;
 
 
+
+// run the threads in client?
 public class Client
 {
 
+
+
+	// n threads for mining
+	// 2 threads (A and B) for transaction listening and block listening
+	// i don't think there's anything else 
+	// stuff could be paralellized but lets be honest it's not going to make a difference
+
+	// C(N) = n thread mine HASHES_PER_CYCLE times
+	// concurrently A thread checks for new blocks and B thread checks for new transactions & compiles them in multiples of 2 into new merkletree
+	// C(N) are done they all check thread A and B if any new things have happened 
+		// if A has something, then they take the new block and toss the transactions that are already existing
+		// if B has something if the new merkletree is done then they take it, otherwise they go back to mining
+
+	// if A has something, communicates with B to toss the existing transactions that are in the block
+
+
+	/* MiningThread
+		Block currentBlock
+		SharedData flag
+			just has a flag for A and a flag for B
+	*/
+
+	/* BlockThread
+		Block currentBlock
+		Block newBlock
+		SharedData flag
+			flag to turn on new block
+
+	*/
+
+	/* TransactionThread
+		Block currentBlock
+		Transaction newTransactions[TRANSACTION_MAX]
+		MerkleTree merkle
+		SharedData flag
+			flag for new transactions
+		
+	*/
 	public boolean confirm_transaction(Transaction t) {
 		// check through chain if the transaction is valid
 		// meaning check if it already exists, or the transaction number is wrong
@@ -14,12 +54,28 @@ public class Client
 	}
 
 
+
+
 	public static void main(String[] args) {
+
+		int numCores = Runtime.getRuntime().availableProcessors();
+
+		SharedData sd;
+
+		MinerThread miners[numCores];
+		for (int i=0;i<numCores;i++) {
+			miners[i] = new MinerThread(sd ,"Thread "+i, block);
+		}
 		// no class initialization for client
 		// just run client
 
 		// check for init files here
 		
+		// todo:
+		// valid mining rewards
+		// mining rewards
+		// valid blocks
+
 		User user = new User();
 		user.initUser();
 		User test = new User();

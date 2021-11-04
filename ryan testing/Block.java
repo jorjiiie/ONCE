@@ -8,12 +8,13 @@ import java.math.BigDecimal;
 public class Block extends CRYPTO implements java.io.Serializable
 {
 	private static double versionNumber = 1.0;
-	
+	public static final int DIFFICULTY = 15;
 	private int height;
 	
 	private long timeStamp;
 	private int randNumber;
 	private PublicKey miner_id;
+
 
 	private Transaction[] transactions;
 
@@ -114,6 +115,16 @@ public class Block extends CRYPTO implements java.io.Serializable
 			hash();
 			if (less(target)) {
 				break;
+			}
+		}
+	}
+	public void startMine(int iterations) {
+
+		
+		for (int i=0;i<iterations;i++) {
+			hash();
+			if (less(DIFFICULTY)) {
+				return;
 			}
 		}
 	}
