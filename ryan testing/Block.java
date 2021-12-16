@@ -9,6 +9,8 @@ public class Block extends CRYPTO implements java.io.Serializable
 {
 	private static double versionNumber = 1.0;
 	public static final int DIFFICULTY = 15;
+	// i think this is fine
+	public static final int MAX_TRANSACTIONS = 30;
 	private int height;
 	
 	private long timeStamp;
@@ -19,8 +21,8 @@ public class Block extends CRYPTO implements java.io.Serializable
 	private Transaction[] transactions;
 
 	private MerkleTree mTree;
-	private byte[] mRoot;	
-	private String mRootHex;
+	private byte[] mRoot, transactionHash;	
+	private String mRootHex, transactionHashString;
 	// no idea how to make unique ids LOL
 	// how to uniquely hash?
 	private byte[] blockHash,previous_block;
@@ -120,7 +122,7 @@ public class Block extends CRYPTO implements java.io.Serializable
 	}
 	public void startMine(int iterations) {
 
-		
+
 		for (int i=0;i<iterations;i++) {
 			hash();
 			if (less(DIFFICULTY)) {

@@ -58,14 +58,25 @@ public class Client
 
 	public static void main(String[] args) {
 
+
+
 		int numCores = Runtime.getRuntime().availableProcessors();
 
-		SharedData sd;
+		SharedData sd = new SharedData("hi");
 
-		MinerThread miners[numCores];
+		// init a random block for us to use
+
+		Block b = new Block(0, null, null);
+
+
+		MinerThread[] miners = new MinerThread[numCores];
+		BlockListenerThread block_listener = new BlockListenerThread(sd, "block listener", b)
 		for (int i=0;i<numCores;i++) {
-			miners[i] = new MinerThread(sd ,"Thread "+i, block);
+			miners[i] = new MinerThread(sd ,"Thread "+i, b);
+			miners[i].start();
 		}
+
+
 		// no class initialization for client
 		// just run client
 

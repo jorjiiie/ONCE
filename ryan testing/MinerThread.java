@@ -1,26 +1,23 @@
 public class MinerThread extends ConcurrentThread{
+	// turns on when block is mined
+	private AtomicBoolean minerFlag;
 
 	public MinerThread(SharedData sd, String name, Block block) {
 		super(sd,name,block);
 	}
 	public void run() {	
 
-		try {
-			Thread.sleep(2000);
-		} catch (Exception e) {
-			System.out.println(e);
-		}
 		if (currentBlock != null)
 			currentBlock.startMine(100000);
 				
 
-		if (sd.flagA) {
+		if (sd.flagA.get()) {
 			// do blocks stuffs
 
 		}
-		if (sd.flagB) {
+		if (sd.flagB.get()) {
 			// check if new merkle is buenoo
-			if ()
+			// if ()
 		}
 	}
 
