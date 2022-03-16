@@ -18,7 +18,7 @@ public class BlockListenerThread extends ConcurrentThread{
 			}
 			boolean recievedBlock = true;
 			if (recievedBlock) {
-				sd.flagA.getAndSet()
+				sd.flagA.getAndSet(true);
 			}
 		}
 	}

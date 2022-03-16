@@ -1,3 +1,5 @@
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class SharedData {
 	// flagA = new block
 		// both listened and mined (same)

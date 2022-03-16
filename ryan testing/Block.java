@@ -1,6 +1,4 @@
 import java.security.*;
-import java.math.BigInteger;
-import java.math.BigDecimal;
 
 // no idea what i'm doign so i'm replacing hashes and everything cipher-y with ints for now
 // job of the block isn't to see if it's valid or not

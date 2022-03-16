@@ -1,3 +1,5 @@
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class MinerThread extends ConcurrentThread{
 	// turns on when block is mined
 	private AtomicBoolean minerFlag;

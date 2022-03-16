@@ -59,7 +59,7 @@ public class Client
 	public static void main(String[] args) {
 
 
-
+	
 		int numCores = Runtime.getRuntime().availableProcessors();
 
 		SharedData sd = new SharedData("hi");
@@ -70,7 +70,7 @@ public class Client
 
 
 		MinerThread[] miners = new MinerThread[numCores];
-		BlockListenerThread block_listener = new BlockListenerThread(sd, "block listener", b)
+		BlockListenerThread block_listener = new BlockListenerThread(sd, "block listener", b);
 		for (int i=0;i<numCores;i++) {
 			miners[i] = new MinerThread(sd ,"Thread "+i, b);
 			miners[i].start();
@@ -86,7 +86,7 @@ public class Client
 		// valid mining rewards
 		// mining rewards
 		// valid blocks
-
+		/*
 		User user = new User();
 		user.initUser();
 		User test = new User();
@@ -136,5 +136,6 @@ public class Client
 		// for (Block bb : chain.values()) {
 		// 	System.out.println(bb);
 		// }
+		// */
 	}
 }
