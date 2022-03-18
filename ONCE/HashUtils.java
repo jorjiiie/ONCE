@@ -10,7 +10,7 @@ import java.util.HashMap;
  */
 public class HashUtils
 {
-	static HashMap<Character, String> hex;
+	private static HashMap<Character, String> hex;
 
 	public static String hexToByte(String s) {
 		// yes I know it returns a string

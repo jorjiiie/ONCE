@@ -5,15 +5,19 @@
  *
  */
 
+package client;
 
 import java.util.HashMap;
 
 
-
+// this is a MINING CLIENT (?)
+// we can have non-mining clients that just broadcast transactions (no listeners, only some broadcasters)
 public class Client {
 	private HashMap<String, Block> blockchain;
 	// inefficient lol
 	private HashMap<String, Transaction> existingTransactions;
+	private NetworkListener listener;
+	private NetworkBroadcaster broadcaster;
 
 	
 	

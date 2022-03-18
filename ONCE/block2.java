@@ -1,5 +1,3 @@
-package core;
-
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.Random;
@@ -10,12 +8,12 @@ import java.util.Random;
  */
 
 
+
 // performance improvements:
 // instead of getting time every second, do every like 1000 hashes or smth
 // do binary comparisons rather than binary -> string -> binary (java moment lol)
 // the nonusage of string would probably make the hashing about 20x faster but it really doesnt matter lol
-
-public class Block {
+public class block2 {
 	
 	// tHash is a local variable used for verification (transaction hash)
 	private String blockHash, tHash, previousHash;
@@ -28,12 +26,12 @@ public class Block {
 	private int depth;
 	private Random rand;
 		
-	public Block(Transaction[] _transactions, BigInteger _miner) {
+	public block2(Transaction[] _transactions, BigInteger _miner) {
 		transactions = _transactions;
 		miner = _miner;
 		rand = new Random(System.nanoTime());
 	}
-	public Block(Transaction[] _transactions, BigInteger _miner, String _blockHash, String _previousHash, long _salt, int _depth, Timestamp _timestamp) {
+	public block2(Transaction[] _transactions, BigInteger _miner, String _blockHash, String _previousHash, long _salt, int _depth, Timestamp _timestamp) {
 		transactions = _transactions;
 		miner = _miner;
 		blockHash = _blockHash;
@@ -66,6 +64,7 @@ public class Block {
 				return false;
 			}
 		}
+		blockHash = HashUtils.byteToHex(hashBytes);
 		hashTransactions();
 		System.out.println("hi");
 		System.out.println(toString());
@@ -76,21 +75,22 @@ public class Block {
 		timestamp.setTime(System.currentTimeMillis());
 		timeString = timestamp.toString();
 	}
-	public String hash() {	
+	public void hash() {	
 		salt = rand.nextLong();
-		return blockHash= HashUtils.sHash(str());
+		hashBytes = HashUtils.hash(toString());
 	}
-	public boolean lessThan(String cmp) {
-		String bHash = HashUtils.hexToByte(blockHash);
-		int minLength = Math.min(cmp.length(), bHash.length());
-		for (int i=0;i<minLength;i++) {
-			if (cmp.charAt(i) != bHash.charAt(i)) {
-				if (cmp.charAt(i) == '1')
-					return false;
-				return true;
+	public boolean lessThan(int n) {
+		int current = 256;
+		outer:
+			for (int i=0;i<32;i++) {
+				for (int j=7;j>=0;j--) {
+					if (((hashBytes[i] & (1 << j)) != 0)) {
+						current = i*8 + (7-j);
+						break outer;
+					}
+				}
 			}
-		}
-		return false;
+		return current < n;
 	}
 	public String getBlockHash() {
 		return blockHash;
@@ -106,7 +106,7 @@ public class Block {
 			System.out.println(ts[i].verify());
 		}
 
-		Block nb = new Block(ts, carl.getPublic());
+		block2 nb = new block2(ts, carl.getPublic());
 		nb.hashTransactions();
 		long start = System.currentTimeMillis();
 		long cnt = 0;
@@ -114,12 +114,13 @@ public class Block {
 			nb.hash();
 			cnt++;
 			//System.out.println("hello");
-		} while (nb.lessThan("0000000000000000001"));
+		} while (nb.lessThan(20));
 		long end = System.currentTimeMillis();
 		System.out.println(cnt + " hashes in " + (end-start) + " ms or " + cnt*1000.0/(end-start) + "h/s");
 		System.out.println(nb);
 		System.out.println(nb.verify());
 		System.out.println(HashUtils.hexToByte(nb.getBlockHash()));
-		System.out.println(nb.lessThan("0001"));
+		System.out.println(nb.lessThan(3));
 	}
 }
+
