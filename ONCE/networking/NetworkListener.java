@@ -1,4 +1,6 @@
-pacakge networking;
+package ONCE.networking;
+
+import ONCE.client.*;
 
 import java.net.*;
 import java.io.*;
@@ -15,7 +17,7 @@ import java.util.HashSet;
 public class NetworkListener extends Thread{
 	// for local testing to host multiple nodes on one computer
 	// am assuming that there will not be clashing nodes at the exact same time lol
-	private static NUMBER_LISTENERS = 8000;
+	private static int NUMBER_LISTENERS = 8000;
 
 	private ServerSocket server;
 	private HashSet<Listener> listeners;
@@ -25,17 +27,28 @@ public class NetworkListener extends Thread{
 
 	public NetworkListener() {
 		// this will pick first available port
-		server = new ServerSocket(NUMBER_LISTENERS++);
-		System.out.println("Listening on port " + server.getLocalPort());
-		listeners = new HashSet<Listener>();
+		try	{
+			server = new ServerSocket(NUMBER_LISTENERS++);
+
+			System.out.println("Listening on port " + server.getLocalPort());
+			listeners = new HashSet<Listener>();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		// also add the unknown connection error
 	}
 
 	public void run() {
 		// add and run
 		// will need a mechanism to clear out, so maybe a hashmap?
-		Socket client = server.accept();
-		listeners.add(new Listener(client));
-		listeners.get(listeners.size()-1).start();
+		try (
+			Socket client = server.accept();
+		) {
+			listeners.add(new Listener(client));
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		// hashmap addr to listener maybe
 	}
 
 	public void initListener() {
@@ -44,11 +57,16 @@ public class NetworkListener extends Thread{
 		Thread clientListener = new Thread() 
 		{
 			public void run() {
-				Socket client = server.accept();
-				listeners.add(new Listener(client));
-				listeners.get(listeners.size()-1).start();
+				try (
+					Socket client = server.accept();
+				) {
+					listeners.add(new Listener(client));
+				} catch(IOException e) {
+					e.printStackTrace();
+				}
+
 			}
-		}
+		};
 		clientListener.start();
 
 	}

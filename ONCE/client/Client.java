@@ -1,3 +1,7 @@
+package ONCE.client;
+
+import ONCE.networking.*;
+import ONCE.core.*;
 /*
  * Ryan Zhu
  * Client class. Keeps one main hashmap in memory (not disk lol! expecting blockchain to stay small) which is the blockchain (hash:block) itself, as well as transactions of users (hash:transaction, if one transaction == existing hash, auto reject) 
@@ -5,7 +9,6 @@
  *
  */
 
-package client;
 
 import java.util.HashMap;
 
@@ -17,7 +20,7 @@ public class Client {
 	// inefficient lol
 	private HashMap<String, Transaction> existingTransactions;
 	private NetworkListener listener;
-	private NetworkBroadcaster broadcaster;
+	// private NetworkBroadcaster broadcaster;
 
 	
 	
