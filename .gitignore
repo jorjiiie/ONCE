@@ -1,2 +1,4 @@
 *.class
 *.out
+.DS_STORE
+**/.DS_STORE
