@@ -18,8 +18,9 @@ import java.util.Random;
 public class Block {
 	
 	// tHash is a local variable used for verification (transaction hash)
+	public static final int MINING_DIFFICULTY = 25;
 	private String blockHash, tHash, previousHash;
-	private byte[] hashBytes;
+	private byte[] byteHash;
 	private Transaction[] transactions;
 	private long salt;
 	private Timestamp timestamp = new Timestamp(System.currentTimeMillis());
@@ -44,6 +45,7 @@ public class Block {
 		rand = new Random(System.nanoTime());
 	}
 	public String toString() {
+		blockHash = HashUtils.byteToHex(byteHash);
 		return blockHash + " " + tHash + " " + previousHash + " " + salt + " " + miner + " " + depth + " " + timestamp;
 	}
 	// for hash
@@ -76,9 +78,13 @@ public class Block {
 		timestamp.setTime(System.currentTimeMillis());
 		timeString = timestamp.toString();
 	}
-	public String hash() {	
+	public String hashString() {	
 		salt = rand.nextLong();
 		return blockHash= HashUtils.sHash(str());
+	}
+	public void hash() {
+		salt = rand.nextLong();
+		byteHash = HashUtils.hash(str());
 	}
 	public boolean lessThan(String cmp) {
 		String bHash = HashUtils.hexToByte(blockHash);
@@ -91,6 +97,21 @@ public class Block {
 			}
 		}
 		return false;
+	}
+	public boolean lessThan(int n) {
+		// compare this hash to (0 * n) 1
+		// if less than, returns true
+		int current = 256;
+		outer:
+			for (int i=0;i<32;i++) {
+				for (int j=7;j>=0;j--) {
+					if (((byteHash[i] & (1 << j)) != 0)) {
+						current = i*8 + (7-j);
+						break outer;
+					}
+				}
+			}
+		return current >= n;
 	}
 	public String getBlockHash() {
 		return blockHash;
@@ -111,7 +132,7 @@ public class Block {
 		long start = System.currentTimeMillis();
 		long cnt = 0;
 		do {
-			nb.hash();
+			nb.hashString();
 			cnt++;
 			//System.out.println("hello");
 		} while (nb.lessThan("0000000000000000001"));

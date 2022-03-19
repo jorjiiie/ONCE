@@ -1,6 +1,7 @@
 package ONCE.networking;
 
 import ONCE.client.*;
+import ONCE.core.*;
 
 import java.net.*;
 import java.io.*;
@@ -13,17 +14,14 @@ import java.util.HashSet;
  *
  */
 
-
 public class NetworkListener extends Thread{
 	// for local testing to host multiple nodes on one computer
 	// am assuming that there will not be clashing nodes at the exact same time lol
+	// change this to a pass in args thing in the main client
 	private static int NUMBER_LISTENERS = 8000;
 
 	private ServerSocket server;
 	private HashSet<Listener> listeners;
-
-	// for grabbing data from client
-	Client hostClient;
 
 	public NetworkListener() {
 		// this will pick first available port
@@ -57,31 +55,27 @@ public class NetworkListener extends Thread{
 		Thread clientListener = new Thread() 
 		{
 			public void run() {
-				try (
-					Socket client = server.accept();
-				) {
-					listeners.add(new Listener(client));
-				} catch(IOException e) {
-					e.printStackTrace();
-				}
+				while (true) {
+					try (
+						Socket client = server.accept();
+					) {
+						Listener current = new Listener(client);
+						listeners.add(current);
+						current.start();
+						Logging.log("Connected to " + client + " and is now listening");
+						// can stop the listener by closing the client socket
+					} catch(IOException e) {
+						e.printStackTrace();
+					}
 
+				}
 			}
 		};
 		clientListener.start();
+	}
+	public void closeListener(Socket s) {
+		// we will just throw around references of socket like willy-nilly
 
 	}
 
-
-	private class Listener extends Thread {
-		// each has threadpool that takes out the tasks
-		// these are the LISTENERS so these will send stuff back 
-		private Socket client;
-
-		public Listener(Socket _client) {
-			client = _client;
-		}
-		public void run() {
-			// listen to the client and accept stuff from it?
-		}
-	}
 }

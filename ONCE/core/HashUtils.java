@@ -73,5 +73,8 @@ public class HashUtils
 	public static String sHash(String s) {
 		return byteToHex(hash(s));
 	}
+	public static byte[] getBytes(String s) {
+		return s.getBytes(StandardCharsets.UTF_8);
+	}
 }
 

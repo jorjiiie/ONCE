@@ -15,7 +15,7 @@ public class sock {
 			System.out.println("init: " + inS);
 			//idk why i need this but ok
 			inS = in.readLine();
-			while (!inS.equals("Bye")) {
+			while (!soc.isInputShutdown() && !inS.equals("Bye")) {
 				
 				outS = cin.readLine();
 				out.println(outS);

@@ -11,17 +11,27 @@ import ONCE.core.*;
 
 
 import java.util.HashMap;
-
+import java.util.ArrayList;
 
 // this is a MINING CLIENT (?)
 // we can have non-mining clients that just broadcast transactions (no listeners, only some broadcasters)
 public class Client {
+
+	public static Client hostClient;
+
 	private HashMap<String, Block> blockchain;
 	// inefficient lol
 	private HashMap<String, Transaction> existingTransactions;
 	private NetworkListener listener;
 	// private NetworkBroadcaster broadcaster;
 
-	
+	private ArrayList<MiningThread> miners;
+	// so we can update protocol
+	public final int VERSION_NUMBER = 0;
+
+	// probably an addblock method
+	public Client() {
+		hostClient = this;
+	}
 	
 }
