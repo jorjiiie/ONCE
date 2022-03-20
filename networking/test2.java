@@ -12,7 +12,15 @@ public class test2 {
 
 		) {
 			try {
-				Block b = (Block) in.readObject();
+				Object obj = in.readObject();
+				if (obj instanceof Block) {
+					System.out.println("it is a block");
+				} 
+				if (obj instanceof Apple) {
+					System.out.println("apple");
+				} 
+				System.out.println(obj);
+				Block b = (Block) obj;
 				System.out.println("received " + b);
 			} catch (Exception e){
 				e.printStackTrace();
