@@ -4,7 +4,7 @@ public class sock {
 	public static void main(String[] args) throws java.io.IOException {
 
 		try(
-			Socket soc = new Socket("localhost", 8069);
+			Socket soc = new Socket("0.0.0.0", 8069);
 			PrintWriter out = new PrintWriter(soc.getOutputStream(), true);
 			BufferedReader in = new BufferedReader(new InputStreamReader(soc.getInputStream()));
 		) {

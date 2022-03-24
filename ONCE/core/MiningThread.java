@@ -13,12 +13,11 @@ public class MiningThread extends Thread {
 	}
 	public void mine() {
 		while (stopSignal != true) {
-			for (int i=0;i<HASHES_PER_CYCLE;i++) {
-				pointer.block.hash();
-				if (pointer.block.lessThan(Block.MINING_DIFFICULTY)) {
-					// we got something!
-					// notify main thread somehow
-				}
+			pointer.block.hash();
+			if (pointer.block.lessThan(Block.MINING_DIFFICULTY)) {
+				// we got something!
+				// notify main thread somehow
+				// interrupt?
 			}
 		}
 	}

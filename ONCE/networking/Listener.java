@@ -53,6 +53,8 @@ public class Listener extends Thread {
 		while (true) {
 			// uhh i dont know run this entirely on the protocol?
 			// should make this in parallel with the broadcaster
+			ONCEProtocol hostProtocol = new ONCEProtocol(true);
+			
 			break;
 		}
 		Logging.log("Socket " + client + " closed");

@@ -44,4 +44,7 @@ public class TestThread extends Thread {
 			e.printStackTrace();
 		}
 	}
+	public static void main(String[] args) {
+		System.out.println("abc");
+	}
 }

@@ -7,9 +7,11 @@ public class multitest {
 		try (
 		ServerSocket server = new ServerSocket(8069);
 		) {
-			System.out.println(server.getLocalPort());
+			System.out.println(server.getInetAddress()+"\n"+server.getLocalPort() + "\n" + server.getLocalSocketAddress());
+			Logging.log(server.getInetAddress().getHostAddress());
+			System.out.println("im using " + server.getInetAddress() + " " + server.getLocalPort());
 			System.out.println(InetAddress.getLocalHost().getHostAddress());
-
+	
 			while (true) {
 				Socket soc = server.accept();
 				TestThread thread = new TestThread(soc, cnt++);

@@ -3,8 +3,9 @@ import java.io.*;
 
 // this is not a protocol lmao its just the handling
 // could use an abstract class here so it do good later when you have "updates"
+// check out protobuffers when you have a chance
 public class APPLEProtocol {
-    private int STATE = 0;
+    private int STATE = -1;
     private boolean host = false;
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -40,6 +41,47 @@ public class APPLEProtocol {
         }
 
     }
+    public void listen(Socket client) {
+         try (
+            ObjectOutputStream _out = new ObjectOutputStream(client.getOutputStream());
+            ObjectInputStream _in = new ObjectInputStream(client.getInputStream());
+        ) { 
+            in = _in;
+            out = _out;
+            Apple confirmation = new Apple("donda estas");
+
+            // can interrupt this by shutting down the client thingie
+
+            while (!client.isInputShutdown()) {
+                /*
+                Object obj = in.readObject();
+                if (obj instanceof RejectionMessage) {
+                    // ALL messages should extend Message which has type, then we can always check the type so we can handle rejection, close, and others easily w/o making a whole new ass class for it
+                    STATE = 0;
+                    continue;
+                }
+                */
+                System.out.println("READING: " + client.getInputStream().available());
+
+                Object obj;
+                try {
+                    obj = in.readObject();
+                } catch (EOFException e) {
+                    e.printStackTrace();
+                    System.out.println("wtf");
+                    break;
+                }
+
+                System.out.println(obj);
+                MessageHeader mheader = (MessageHeader) obj;
+                switch(mheader.type) {
+                    
+                }
+            } 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     public void start(Socket client) {
 
         try (
@@ -49,6 +91,9 @@ public class APPLEProtocol {
             in = _in;
             out = _out;
             Apple confirmation = new Apple("donda estas");
+
+            // can interrupt this by shutting down the client thingie
+
             while (!client.isInputShutdown()) {
                 /*
                 Object obj = in.readObject();
@@ -71,6 +116,7 @@ public class APPLEProtocol {
 
                 System.out.println(obj);
                 switch(STATE) {
+
                     case 0:
                         try {
                             MessageHeader m = (MessageHeader) obj;

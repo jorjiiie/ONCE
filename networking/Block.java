@@ -1,17 +1,19 @@
 import java.io.Serializable;
 
 import java.util.ArrayList;
-public class Block implements Serializable {
+public class Block extends MessageHeader implements Serializable {
 	private String hash;
 	private int cnt;
 	private Apple[] fruits;
 
 	public Block() {
+		super(1);
 		hash = "";
 		cnt = 10;
 		fruits = null;
 	}
 	public Block(String h, int c, Apple[] f) {
+		super(1);
 		hash = h;
 		cnt = c;
 		fruits = f;

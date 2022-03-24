@@ -10,13 +10,14 @@ import java.io.Serializable;
 // we will do this a poc but move over pretty quickly, I don't think it will interferere with anything and I'll just have to change the protocol and some communication stuffs
 // we will have ONCEProtocol protocol = new Protocol_0_0_1() or something and override the functions
 // biggest issue is that it is not language independent
-public class MessageHeader implements Serializable {
+public class MessageHeader extends Message implements Serializable {
 	public final int TYPE;
 	// don't know if this is necessary, since it may be able to just pick up the blocks on its own
 	public final int SIZE;
 	public final String CHECKSUM;
 
 	public MessageHeader(int type, int sz, String checksum) {
+		super(1);
 		TYPE = type;
 		SIZE = sz;
 		CHECKSUM = checksum;

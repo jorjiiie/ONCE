@@ -11,7 +11,12 @@ public class Sender {
             Socket soc = new Socket("localhost", 8069);
             ObjectOutputStream out = new ObjectOutputStream(soc.getOutputStream());
             ObjectInputStream in = new ObjectInputStream(soc.getInputStream());
-
+            // essentially, for main program you can keep a bunch of these in the broadcasters, and only activate on requests
+            // listeners are always in their thread chillin
+            // do not close!! right now we are closing with errors LOL
+            // we may not ever need to close by error since we can just
+            // go like broadcasterA -> listenerB, listenerB dead -> broadcasterA dead
+            // broadcasterA dead -> listenerA dead
         ) {
             BufferedReader cin = new BufferedReader(new InputStreamReader(System.in));
             String inS = "";

@@ -16,6 +16,9 @@ public class Transaction {
 	private long amount;
 	private BigInteger signature;
 	private long id; // generates random number on sign, client will check whether or not that identifier has been used already
+	// just use a timestamp ()
+	private String hash;
+
 
 	public Transaction(BigInteger _reciever, BigInteger _sender, long amt) {
 		signer = new RSA(_sender);
@@ -33,7 +36,7 @@ public class Transaction {
 	}
 	public boolean sign(RSA _signer) {
 		try {
-			generateID();
+			id = System.currentTimeMillis();
 			signature = _signer.sign(HashUtils.sHash(toString()));
 			return true;
 		} catch(Exception e) {
@@ -48,7 +51,11 @@ public class Transaction {
 		return signer.verify(HashUtils.sHash(toString()), signature);
 	}
 	public String getHash() {
-		return HashUtils.sHash(toString());
+		return hash;
+	}
+	public void setHash() {
+		String str = "" + reciever + sender + amount + signature + id;
+		hash = HashUtils.sHash(str);
 	}
 	public static void main(String[] args) {
 		RSA joe = new RSA();
