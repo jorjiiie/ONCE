@@ -26,4 +26,21 @@ public class Block extends MessageHeader implements Serializable {
 		ret += fruits[fruits.length-1] + "]";
 		return ret;
 	}
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) 
+			return false;
+		if (obj.getClass() != this.getClass())
+			return false;
+		final Block b = (Block) obj;
+		if (!hash.equals(b.hash) || cnt != b.cnt || fruits.length != b.fruits.length) {
+			return false;
+		}
+		for (int i = 0; i < fruits.length; i++) {
+			if (!fruits[i].equals(b.fruits[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

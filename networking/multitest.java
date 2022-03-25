@@ -15,7 +15,7 @@ public class multitest {
 			while (true) {
 				Socket soc = server.accept();
 				TestThread thread = new TestThread(soc, cnt++);
-				System.out.println(soc);
+				System.out.println("ASDJASJD " + soc.getInetAddress());
 				thread.start();
 				System.out.println(" new connection");
 				System.out.println(""+soc.getReceiveBufferSize() + " " + soc.getSendBufferSize());

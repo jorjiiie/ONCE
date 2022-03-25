@@ -15,4 +15,13 @@ public class Apple extends MessageHeader implements Serializable {
 	public String toString() {
 		return name;
 	}
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null)
+			return false;
+		if (obj.getClass() != this.getClass())
+			return false;
+		final Apple apple = (Apple) obj;
+		return name.equals(apple.name);
+	}
 }

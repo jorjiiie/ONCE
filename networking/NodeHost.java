@@ -5,14 +5,14 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class Master {
-	public static Master self;
+public class NodeHost {
+	public static NodeHost self;
 
 	public Networker slave;
 	public ArrayList<Block> blockahs;
 
 	public boolean stop;
-	public Master() {
+	public NodeHost() {
 		blockahs = new ArrayList<Block>();
 
 	}
@@ -53,7 +53,7 @@ public class Master {
 			Logging.log("error finding to localhost");
 			System.exit(0);
 		}
-		Master client = new Master();
+		NodeHost client = new NodeHost();
 
 		int pt = 8069;
 		if (args.length > 1) {
@@ -74,9 +74,9 @@ public class Master {
 		client.slave.listen();
 		client.randData(5);
 
-		Master.self = client;
+		NodeHost.self = client;
 
-		// System.out.println("ASDJHASHD " + Master.self.blockahs);
+		// System.out.println("ASDJHASHD " + NodeHost.self.blockahs);
 
 		Scanner in = new Scanner(System.in);
 		// just read for input lol and if we are already connected then whever lol
@@ -121,7 +121,7 @@ public class Master {
 						}
 
 						Logging.log("Attempting to transmit block " + client.blockahs.get(x));
-						//slave.transmit(client.blockahs.get(x));
+						client.slave.broadcastMessage(client.blockahs.get(x));
 
 					} else if (nxt == 3) {
 						// see connections

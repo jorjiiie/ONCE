@@ -1,6 +1,9 @@
 package ONCE.networking;
 
 // could turn this abstract but i am making a mock up first
+import java.io.*;
+import java.net.*;
+
 public class ONCEProtocol {
 	private static final int WAITING = 1;
 	private static final int SEND_BLOCK = 5;
@@ -22,7 +25,6 @@ public class ONCEProtocol {
 	private Message readMessage(ObjectInputStream in) {
 		try {
 			Object o = in.readObject();
-			if ()
 		} catch (Exception e) {
 			e.printStackTrace();
 			Logging.log("Error when reading from "  + soc);

@@ -6,6 +6,7 @@ public class MessageHeader implements Serializable {
 	// 1 - block
 	// 2 - apple
 	// 0 - connect message
+	// -1 - disconnect message
 	public MessageHeader(int n) {
 		type = n;
 	}
