@@ -3,6 +3,14 @@ import java.net.*;
 
 import java.util.ArrayList;
 
+
+/*
+	this should just manage connections
+	should not do much reading in/out though
+	can pass the in/out into the other things (not even the sockets)
+
+
+*/
 public class Networker {
 	public static Networker self;
 	public ServerSocket server;
@@ -184,7 +192,7 @@ public class Networker {
 		// issue is that this thing removes while going through
 		// if u use a lock itll deadlock stupid
 		for (NetPair np : connections) {
-			np.disconnect(false);
+			np.shutdown();
 		}
 	}
 
@@ -209,20 +217,31 @@ public class Networker {
 			addr = _broadcaster.socket.getInetAddress();
 			port = _broadcaster.socket.getPort();
 		}
-		public void disconnect(boolean remove) {
-
+		public void shutdown() {
+			// do not remove
 			if (disconnected)
 				return;
+			listener.disconnect();
+			broadcaster.disconnectWithMessage();
+		}
+		public void disconnect() {
+
+			if (disconnected) {
+				// should implement some locks 
+				Networker.self.remove(this);
+				return;
+			}
 
 			listener.disconnect();
 			broadcaster.disconnectWithMessage();
 
 			disconnected = true;
 
-			if (remove)
-				Networker.self.remove(this);
+			Networker.self.remove(this);
+
+			Logging.log("Successfully disconnected from " + addr + ":" + port);
 		}
-		public void disconnectNoMessage(boolean remove) {
+		public void disconnectNoMessage() {
 
 			if (disconnected)
 				return;
@@ -232,8 +251,9 @@ public class Networker {
 
 			disconnected = true;
 
-			if (remove)
-				Networker.self.remove(this);
+			Networker.self.remove(this);
+
+			Logging.log("Successfully disconnected from " + addr + ":" + port);
 		}
 		public void ready() {
 			listener.ready = true;
@@ -299,27 +319,29 @@ public class Networker {
 			}
 		}
 		public void disconnect() {
-			Logging.log("DISCONNECTING");
 			try {
 				socket.shutdownInput();
 				socket.shutdownOutput();
 				socket.close();
 			} catch (SocketException e) {
 				// good
+				return;
 			} catch (Exception e) {
 				e.printStackTrace();
 				Logging.log("Error while closing connection to " + socket, name);
 			}
 		}
 		public void disconnectWithMessage() {
-			Logging.log("DISCONNECTING message");
 
-			MessageHeader m = new MessageHeader(-1);
-			sendMessage(m);
 			try {
+				MessageHeader m = new MessageHeader(-1);
+				out.writeObject(m);
 				socket.shutdownInput();
 				socket.shutdownOutput();
 				socket.close();
+			} catch (SocketException e) {
+				// do nothing
+				return;
 			} catch (Exception e) {
 				e.printStackTrace();
 				Logging.log("Error while closing connection to " + socket, name);
@@ -359,7 +381,7 @@ public class Networker {
 							if (m.type == -1) {
 								// disconnect message
 								Logging.log("Recieved disconnect message from " + socket + ", shutting down");
-								parent.disconnectNoMessage(true);
+								parent.disconnectNoMessage();
 								return;
 							} else if (m.type == 1) {
 								continue;
@@ -378,7 +400,7 @@ public class Networker {
 							// don't need this bc this is only if shut down
 							// e.printStackTrace();
 							Logging.log(socket + " was shut down, closing pair");
-							parent.disconnectNoMessage(true);
+							parent.disconnectNoMessage();
 							return;
 						} catch (Exception e) {
 							e.printStackTrace();
