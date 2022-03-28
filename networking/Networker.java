@@ -121,6 +121,7 @@ public class Networker {
 		}.start();
 	}
 	public void broadcastMessage(MessageHeader m) {
+		Logging.log("Broadcasting " + m);
 		for (NetPair np : connections) {
 			if (!np.broadcaster.socket.isClosed())
 				np.broadcaster.sendMessage(m);

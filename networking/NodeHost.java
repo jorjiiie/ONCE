@@ -121,7 +121,8 @@ public class NodeHost {
 						}
 
 						Logging.log("Attempting to transmit block " + client.blockahs.get(x));
-						client.slave.broadcastMessage(client.blockahs.get(x));
+						BlockMessage bm = new BlockMessage(client.blockahs.get(x));
+						client.slave.broadcastMessage(bm);
 
 					} else if (nxt == 3) {
 						// see connections
