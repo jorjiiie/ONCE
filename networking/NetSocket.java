@@ -1,18 +1,35 @@
 import java.io.*;
 import java.net.*;
 
+// could extend Socket
+/**
+ * Class that handles a single connection as a listener or a broadcaster to a node
+ * @author jorjiiie
+ */ 
 public class NetSocket {
-	public NetPair parent;
-	public Socket socket;
-	
-	public ObjectOutputStream out;
-	public ObjectInputStream in;
 
-	public boolean ready = false;
-	public String name = "DEFAULT SOCKET";
+	private NetPair parent;
+	Socket socket;
+	
+	private ObjectOutputStream out;
+	private ObjectInputStream in;
+
+	boolean ready = false;
+	private String name = "DEFAULT SOCKET";
+
+	/**
+	 * Normal constructor
+	 * @param soc Socket to connect to
+	 */
 	public NetSocket(Socket soc) {
 		socket = soc;
 	}
+
+	/**
+	 * Secondary constructor
+	 * @param addr address to connect to
+	 * @param port port to connect to
+	 */
 	public NetSocket(InetAddress addr, int port) {
 		try {
 			socket = new Socket(addr, port);
@@ -21,6 +38,12 @@ public class NetSocket {
 			Logging.log("Couldn't connect to " + addr + " on port " + port, name);
 		}
 	}
+
+	/**
+	 * Tertiary constructor
+	 * @param addr address to connect to
+	 * @param port to connect to
+	 */
 	public NetSocket(String addr, int port) {
 		try {
 			socket = new Socket(addr, port);
@@ -29,7 +52,12 @@ public class NetSocket {
 			Logging.log("Couldn't connect to " + addr + " on port " + port, name);
 		}
 	}
+
+	/**
+	 * Initialize I/O for the socket into out and in
+	 */
 	public void initIO() {
+		// i think initio should be a default?
 		try {
 			out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
@@ -38,6 +66,10 @@ public class NetSocket {
 			Logging.log("Couldn't open io streams of " + socket, name);
 		}
 	}
+
+	/**
+	 * Disconnect this socket by shutting down inputs and outputs, and finally closes the socket
+	 */
 	public void disconnect() {
 		try {
 			socket.shutdownInput();
@@ -51,6 +83,10 @@ public class NetSocket {
 			Logging.log("Error while closing connection to " + socket, name);
 		}
 	}
+
+	/**
+	 * Disconnects and sends a disconnect message to the connected socket
+	 */
 	public void disconnectWithMessage() {
 
 		try {
@@ -67,6 +103,12 @@ public class NetSocket {
 			Logging.log("Error while closing connection to " + socket, name);
 		}
 	}
+
+	/**
+	 * Sends the connection information of the host to the connected socket to allow the incoming connection
+	 * @param addr address of the host
+	 * @param port port of the host
+	 */
 	public void connect(InetAddress addr, int port) {
 		// sends a connection message w the info of this stuff
 		NetworkMessage msg = new NetworkMessage(addr, port);
@@ -74,6 +116,11 @@ public class NetSocket {
 		sendMessage(msg);
 	}
 
+	/**
+	 * Method to read a message, should only be used on connection.
+	 * Other messages should be read by the protocol
+	 * @return the MessageHeader that should represent a network connection
+	 */
 	public MessageHeader readMessage() {
 		try {
 			MessageHeader msg = (MessageHeader) in.readObject();
@@ -84,6 +131,11 @@ public class NetSocket {
 			return null;
 		}
 	}
+
+	/**
+	 * Turn on and listen for node traffic
+	 * Spawns a new thread and passes the input/output to a protocol
+	 */
 	public void startListening() {
 		// return;
 		
@@ -119,6 +171,7 @@ public class NetSocket {
 
 						// don't need this bc this is only if shut down
 						// e.printStackTrace();
+						// lol this works out quite well, don't even need disconnect message
 						Logging.log(socket + " was shut down, closing pair");
 						parent.disconnectNoMessage();
 						return;
@@ -131,6 +184,12 @@ public class NetSocket {
 		}.start();
 		
 	}
+
+	/**
+	 * Sends a message to the connected socket
+	 * Should not be used probably
+	 * @param m MessageHeader to be sent
+	 */
 	public void sendMessage(MessageHeader m) {
 		try {
 			out.writeObject(m);
@@ -140,9 +199,18 @@ public class NetSocket {
 		}			
 	}
 
+	/**
+	 * Set name of the socket (Listener, broadcaster)
+	 * @param s name of the socket
+	 */
 	public void setName(String s) {
 		name = s;
 	}
+
+	/** 
+	 * Sets the parent of this socket to the pair
+	 * @param np NetPair that holds a reference to this socket
+	 */
 	public void pairUp(NetPair np) {
 		parent = np;
 	}

@@ -1,1 +1,1 @@
-typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"<Unnamed>","l":"NetManager"}];updateSearchResults();
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"<Unnamed>","l":"Connector"},{"p":"<Unnamed>","l":"NetManager"},{"p":"<Unnamed>","l":"NetPair"},{"p":"<Unnamed>","l":"NetSocket"}];updateSearchResults();
