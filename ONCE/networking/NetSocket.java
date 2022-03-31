@@ -1,3 +1,7 @@
+package ONCE.networking;
+
+import ONCE.core.*;
+
 import java.io.*;
 import java.net.*;
 
@@ -114,7 +118,11 @@ public class NetSocket {
 	 */
 	public void connect(InetAddress addr, int port) {
 		// sends a connection message w the info of this stuff
-		NetworkMessage msg = new NetworkMessage(addr, port);
+		// do we really checksum the payload?
+		NetworkMessage info = new NetworkMessage(addr, port);
+
+		MessageHeader header = new MessageHeader(MessageHeader.NETWORK_MESSAGE, System.currentTimeMillis(), null);
+
 		// write the message to out
 		sendMessage(msg);
 	}
@@ -165,7 +173,7 @@ public class NetSocket {
 						} else if (m.type == 2) {
 							BlockMessage bm = (BlockMessage) m;
 							Logging.log("Recieved block " + bm.block + " from " + socket);
-							Host.self.addBlock(bm.block);
+							// Client.self.addBlock(bm.block);
 						} else if (m.type == 3) {
 							// say something message
 							CommunicationMessage cm = (CommunicationMessage) m;

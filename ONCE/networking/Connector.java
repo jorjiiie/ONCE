@@ -1,3 +1,8 @@
+package ONCE.networking;
+
+import ONCE.core.*;
+import ONCE.client.*;
+
 import java.io.*;
 import java.net.*;
 
@@ -16,6 +21,7 @@ import java.net.*;
 public class Connector {
 
 	static Connector self;
+	Client host;
 	ServerSocket server;
 	int port;
 	// have a reference to the client as well

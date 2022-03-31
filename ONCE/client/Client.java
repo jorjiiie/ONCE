@@ -9,7 +9,7 @@ import ONCE.core.*;
  *
  */
 
-
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.ArrayList;
 
@@ -19,15 +19,16 @@ public class Client {
 
 	public static Client hostClient;
 
-	private HashMap<String, Block> blockchain;
+	// private HashMap<String, Block> blockchain;
+	// private HashSet<Block> blockchain;
 	// inefficient lol
 	private HashMap<String, Transaction> existingTransactions;
-	private NetworkListener listener;
 	// private NetworkBroadcaster broadcaster;
 
 	private ArrayList<MiningThread> miners;
 	// so we can update protocol
 	public final int VERSION_NUMBER = 0;
+
 
 	// probably an addblock method
 	public Client() {

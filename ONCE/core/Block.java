@@ -111,15 +111,30 @@ public class Block {
 					}
 				}
 			}
-		return current >= n;
+		return current < n;
 	}
 	public String getBlockHash() {
 		return blockHash;
 	}
+
+	/**
+	 * Gets hash code of the block, which is just the hashcode of the hash from BigInteger
+	 * @return hash code
+	 */
+	// means about ~44000 blocks before collisions
+	// this is definitely NOT language agnostic but it's not necessary bc each language can handle
+	// the hashsets/database differently
+	@Override 
+	public int hashCode() {
+
+		System.out.println(byteHash.hashCode() +" " + HashUtils.byteToHex(byteHash));
+		return (new BigInteger(byteHash)).hashCode();
+	}
 	public static void main(String[] args) {
+		long st = System.currentTimeMillis();
 		RSA carl = new RSA();
 		RSA joe = new RSA();
-
+		System.out.println(System.currentTimeMillis() - st + " ms for RSA initialization");
 		Transaction[] ts = new Transaction[10];
 		for (int i=0;i<10;i++) {
 			ts[i] = new Transaction(carl.getPublic(), joe.getPublic(), 5);
@@ -132,15 +147,16 @@ public class Block {
 		long start = System.currentTimeMillis();
 		long cnt = 0;
 		do {
-			nb.hashString();
+			nb.hash();
 			cnt++;
 			//System.out.println("hello");
-		} while (nb.lessThan("0000000000000000001"));
+		} while (nb.lessThan(16));
 		long end = System.currentTimeMillis();
 		System.out.println(cnt + " hashes in " + (end-start) + " ms or " + cnt*1000.0/(end-start) + "h/s");
 		System.out.println(nb);
 		System.out.println(nb.verify());
 		System.out.println(HashUtils.hexToByte(nb.getBlockHash()));
 		System.out.println(nb.lessThan("0001"));
+		System.out.println(nb.hashCode());
 	}
 }

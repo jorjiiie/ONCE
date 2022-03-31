@@ -106,5 +106,11 @@ public class RSA {
 		System.out.println(joe.sign("Hello World!"));
 		System.out.println(joe.encrypt(joe.sign("Hello World!")));
 		System.out.println(joe.verify("Hello World!", joe.sign("Hello World!")));
+		long start = System.currentTimeMillis();
+		for (int i=0;i<50;i++) {
+			joe = new RSA();
+		}
+		long end = System.currentTimeMillis();
+		System.out.println(end - start + " ms or around " + (end-start)/(50000.0) + "s per");
 	}
 }

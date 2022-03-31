@@ -1,5 +1,7 @@
 package ONCE.networking;
 
+import ONCE.core.*;
+
 // could turn this abstract but i am making a mock up first
 import java.io.*;
 import java.net.*;
@@ -16,6 +18,10 @@ public class ONCEProtocol {
 	// if you put a shareddata bc host yknow maybe??
 
 	// do not think there should be a version here lol
+	public ONCEProtocol(boolean _host) {
+		host = _host;
+		VERSION = 1;
+	}
 	public ONCEProtocol(boolean _host, int version) {
 		state = WAITING;
 		host = _host;
@@ -25,9 +31,11 @@ public class ONCEProtocol {
 	private Message readMessage(ObjectInputStream in) {
 		try {
 			Object o = in.readObject();
+			return (Message) o;
 		} catch (Exception e) {
 			e.printStackTrace();
 			Logging.log("Error when reading from "  + soc);
+			return null;
 		}
 	}
 	public void processHost(Socket client) {
@@ -36,7 +44,7 @@ public class ONCEProtocol {
             ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
             ObjectInputStream in = new ObjectInputStream(client.getInputStream());
         ) { 
-        	Message init = readMessage();
+        	// Message init = readMessage();
             while (!client.isInputShutdown()) {
             	Object o = in.readObject();
             	Message m = (Message) o;
@@ -60,6 +68,11 @@ public class ONCEProtocol {
 
             	}
             }
+    	} catch (IOException e) {
+    		e.printStackTrace();
+
+    	} catch (Exception e) {
+    		e.printStackTrace();
     	}
 	}
 }
