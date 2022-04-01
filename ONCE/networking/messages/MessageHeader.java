@@ -18,10 +18,7 @@ public class MessageHeader implements Serializable {
 	public final int type;
 	public final long timestamp;
 	public final String checksum;
-	// 1 - block
-	// 2 - apple
-	// 0 - connect message
-	// -1 - disconnect message
+
 	public MessageHeader(int _type, long _timestamp, String _checksum) {
 		type = _type;
 		timestamp = _timestamp;

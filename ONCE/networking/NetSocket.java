@@ -13,16 +13,14 @@ import java.net.*;
  */ 
 public class NetSocket {
 
-	private NetPair parent;
+	NetPair parent;
 	Socket socket;
 	
-	private ObjectOutputStream out;
-	private ObjectInputStream in;
 
 	boolean ready = false;
 	private String name = "DEFAULT SOCKET";
 
-	private Protocol proto;
+	Protocol proto;
 
 	/**
 	 * Normal constructor
@@ -61,16 +59,16 @@ public class NetSocket {
 	}
 
 	/**
-	 * Initialize I/O for the socket into out and in
+	 * Initialize the communication protocol that will handle data transmission
 	 */
-	public void initIO() {
-		// i think initio should be a default?
+	public void initProtocol() {
+		// depending on version stuff, change this
 		try {
-			out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
+			proto = new ObjectProtocol(this);
 		} catch (Exception e) {
+			proto.closed = true;
 			e.printStackTrace();
-			Logging.log("Couldn't open io streams of " + socket, name);
+			Logging.log("Couldn't initialize communication protocol");
 		}
 	}
 
@@ -97,20 +95,11 @@ public class NetSocket {
 	 */
 	public void disconnectWithMessage() {
 
-		try {
-			MessageHeader m = new MessageHeader(MessageHeader.DISCONNECT_MESSAGE, System.currentTimeMillis(), null);
-			Message msg = new Message(m, null);
-			out.writeObject(msg);
-			socket.shutdownInput();
-			socket.shutdownOutput();
-			socket.close();
-		} catch (SocketException e) {
-			// do nothing
-			return;
-		} catch (Exception e) {
-			e.printStackTrace();
-			Logging.log("Error while closing connection to " + socket, name);
-		}
+		MessageHeader m = new MessageHeader(MessageHeader.DISCONNECT_MESSAGE, System.currentTimeMillis(), null);
+		Message msg = new Message(m, null);
+		proto.sendMessage(msg);
+
+		disconnect();
 	}
 
 	/**
@@ -121,98 +110,19 @@ public class NetSocket {
 	public void connect(InetAddress addr, int port) {
 		// sends a connection message w the info of this stuff
 		// do we really checksum the payload?
-		NetworkMessage info = new NetworkMessage(addr, port, 1);
+		proto.connect(addr, port);
 
-		MessageHeader header = new MessageHeader(MessageHeader.NETWORK_MESSAGE, System.currentTimeMillis(), info.checksum());
-
-		Message msg = new Message(header, info);
-
-		sendMessage(msg);
-	}
-
-	/**
-	 * Method to read a message, should only be used on connection.
-	 * Other messages should be read by the protocol
-	 * @return the MessageHeader that should represent a network connection
-	 */
-	public Message readMessage() {
-		try {
-			Message msg = (Message) in.readObject();
-			return msg;
-		} catch (Exception e) {
-			e.printStackTrace();
-			Logging.log("Error while reading message from " + socket,name);
-			return null;
-		}
 	}
 
 	/**
 	 * Turn on and listen for node traffic
 	 * Spawns a new thread and passes the input/output to a protocol
 	 */
-	public void startListening() {
-		// return;
-		
+	public void startListening() {		
 		Logging.log("Started to listen from " + socket,name);
-		// this should be interruptable or you can just catch the close exception as shut down connection
-		// run a protocol in a new thread? that gets the netpair 
 
-		// needs a new thread so we can interrupt
-
-		new Thread() {
-			public void run() {
-				Logging.log(socket + " is " + (ready?"ready":"not ready"));
-				while (ready) {
-					try {
-						Message m = (Message) in.readObject();
-						if (m.header.type == -1) {
-							// disconnect message
-							// not really necessary
-							Logging.log("Recieved disconnect message from " + socket + ", shutting down");
-							parent.disconnectNoMessage();
-							return;
-						} else if (m.header.type == 1) {
-							continue;
-						} else if (m.header.type == 3) {
-							BlockMessage bm = (BlockMessage) m.data;
-							Logging.log("Recieved block " + bm.block + " from " + socket);
-							// Client.self.addBlock(bm.block);
-						} else if (m.header.type == 2) {
-							// say something message
-							CommunicationMessage cm = (CommunicationMessage) m.data;
-							Logging.log("Recieved: " + cm.message + " from: " +cm.author);
-						}
-					} catch (IOException e) {
-						// server shut down
-
-						// don't need this bc this is only if shut down
-						// e.printStackTrace();
-						// lol this works out quite well, don't even need disconnect message
-						Logging.log(socket + " was shut down, closing pair");
-						parent.disconnectNoMessage();
-						return;
-					} catch (Exception e) {
-						e.printStackTrace();
-						Logging.log("Error while reading ");
-					}
-				}
-			}
-		}.start();
+		proto.run();
 		
-	}
-
-	/**
-	 * Sends a message to the connected socket
-	 * Should not be used probably
-	 * @param msg message to be sent
-	 */
-	public void sendMessage(Message msg) {
-		try {
-			out.writeObject(msg);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Logging.log("Error while writing message to " + socket,name);
-		}			
 	}
 
 	/**

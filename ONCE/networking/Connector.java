@@ -106,7 +106,7 @@ public class Connector {
 					NetPair netPair = new NetPair(null, tmpBroadcaster);
 					manager.addConnection(netPair);
 					Logging.log("Broadcasting connection to " + addr + ":" +port);
-					netPair.broadcaster.initIO();
+					netPair.broadcaster.initProtocol();
 					netPair.broadcaster.connect(server.getInetAddress(),server.getLocalPort());
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -134,7 +134,7 @@ public class Connector {
 
 					NetPair netPair = new NetPair(null, tmpBroadcaster);
 					manager.addConnection(netPair);
-					tmpBroadcaster.initIO();
+					tmpBroadcaster.initProtocol();
 					tmpBroadcaster.connect(server.getInetAddress(),server.getLocalPort());
 
 				} catch (Exception e) {
@@ -175,9 +175,6 @@ public class Connector {
  
 					Socket soc = server.accept();
 
-					// this is lazy? im assuming when this is interrupted these threads get destroyed as well
-					// i'm not sure if this should be here or part of the protocol?
-					// bc connecting might change
 					Protocol connect = new ObjectProtocol();
 
 					connect.onConnect(manager,soc,server);

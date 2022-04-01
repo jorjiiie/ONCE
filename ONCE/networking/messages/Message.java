@@ -38,4 +38,11 @@ public class Message implements Serializable {
         // 
         return "lol";
     }
+
+    /**
+     * Verify that the contents of the messare are what they were supposed to be
+     */
+    public boolean verify() {
+        return (header.checksum.equals(data.checksum()));
+    }
 }

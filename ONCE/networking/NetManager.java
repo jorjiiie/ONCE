@@ -144,7 +144,7 @@ public class NetManager {
 			for (NetPair np : connections) {
 				// consider having just a np method vs a np.broadcaster call
 				if (!np.broadcaster.socket.isClosed())
-					np.broadcaster.sendMessage(msg);
+					np.broadcaster.proto.sendMessage(msg);
 			}
 		} finally {
 			readLock.unlock();

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.InetAddress;
 /**
  * Abstract class to define a communication protocol
  * I do it this way because its future proofing apparently
@@ -13,24 +14,21 @@ import java.net.ServerSocket;
  */
 
 public abstract class Protocol extends Thread {
-	private InputStream in;
-	private OutputStream out;
+	protected NetSocket socket;
+	protected boolean closed;
 
 	/**
 	 * Empty constructor
 	 */
 	public Protocol() {
-		in = null;
-		out = null;
 	}
 	/**
 	 * Constructor
 	 * @param _in input stream
 	 * @param _out output stream
 	 */
-	public Protocol(InputStream _in, OutputStream _out) {
-		in = _in;
-		out = _out;
+	public Protocol(NetSocket soc) {
+		socket = soc;
 	}
 
 	/**
@@ -41,6 +39,12 @@ public abstract class Protocol extends Thread {
 	public abstract void onConnect(NetManager manager, Socket soc, ServerSocket server);
 
 	/**
+	 * Defines behavior when connecting to another node
+	 * @param addr address to connect to
+	 * @param port port to connect to
+	 */
+	public abstract void connect(InetAddress addr, int port);
+	/**
 	 * Defines a method for reading a message
 	 * @return message that was read
 	 */
@@ -50,22 +54,8 @@ public abstract class Protocol extends Thread {
 	 * Defines a method for writing a message
 	 * @param msg message to send
 	 */
-	public abstract void writeMessage(Message msg);
+	public abstract void sendMessage(Message msg);
 
-	/**
-	 * Returns the InputStream
-	 * @return the InputStream of this protocol
-	 */
-	public InputStream getInputStream() {
-		return in;
-	}
 
-	/**
-	 * Returns the OutputStream
-	 * @return the OutputStream of this protocol
-	 */
-	public OutputStream getOutputStream() {
-		return out;
-	}
 
 }
