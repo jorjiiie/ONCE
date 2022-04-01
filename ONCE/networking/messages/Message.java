@@ -1,4 +1,4 @@
-package ONCE.networking;
+package ONCE.networking.messages;
 
 /*
  * Message base class that we can use to check for message types
@@ -22,16 +22,20 @@ import java.io.Serializable;
 // in future plans to make language agnostic, I think it's still ok but header should include a size in bytes
 public class Message implements Serializable {
 
-    final MessageHeader header;
-    final Object data;
+    public final MessageHeader header;
+    public final Payload data;
 
     /**
      * Constructor
      * @param _header MessageHeader that has the data common to all messages
      * @param _data payload of the message, null if message is a rejection or a no-payload message
      */
-    public Message(MessageHeader _header, Object _data) {
+    public Message(MessageHeader _header, Payload _data) {
         header = _header;
         data = _data;
+    }
+    public String toString() {
+        // 
+        return "lol";
     }
 }

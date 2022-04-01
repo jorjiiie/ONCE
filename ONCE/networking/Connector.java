@@ -2,6 +2,7 @@ package ONCE.networking;
 
 import ONCE.core.*;
 import ONCE.client.*;
+import ONCE.networking.messages.*;
 
 import java.io.*;
 import java.net.*;
@@ -15,7 +16,6 @@ import java.net.*;
 */
 
 /**
- * Manages connections for a client
  * @author jorjiiie
  */
 public class Connector {
@@ -64,7 +64,7 @@ public class Connector {
 	 * Broadcasts a message to all known connections
 	 * @param msg message to broadcast
 	 */
-	public void broadcastMessage(MessageHeader msg) {
+	public void broadcastMessage(Message msg) {
 		manager.broadcastAll(msg);
 		
 	}
@@ -176,49 +176,11 @@ public class Connector {
 					Socket soc = server.accept();
 
 					// this is lazy? im assuming when this is interrupted these threads get destroyed as well
-					// use a threadpool stupid
-					new Thread() {
-						public void run() {
-							Logging.log("Recieved connection from " + soc);
+					// i'm not sure if this should be here or part of the protocol?
+					// bc connecting might change
+					Protocol connect = new ObjectProtocol();
 
-							// soc will send a thing
-							NetSocket tmpListener = new NetSocket(soc);
-							tmpListener.initIO();
-
-							MessageHeader initMessage = tmpListener.readMessage();
-							if (initMessage != null && initMessage.type != 0) {
-								// refuse connection or smth
-								tmpListener.disconnect();
-								return;
-							}
-							if (initMessage == null) {
-								tmpListener.disconnect();
-								return;
-							}
-							NetworkMessage info = (NetworkMessage) initMessage;
-
-							Logging.log("Message recieved: " +info.addr + " " + info.port);
-
-							if (manager.addListener(tmpListener, info.addr, info.port)) 
-								return;
-
-							NetSocket tmpBroadcaster = new NetSocket(info.addr, info.port);
-							tmpBroadcaster.initIO();
-
-							Logging.log("Sending connection to " + tmpBroadcaster.socket);
-
-							tmpBroadcaster.connect(server.getInetAddress(), server.getLocalPort());
-
-							NetPair netPair = new NetPair(tmpListener, tmpBroadcaster);
-							tmpBroadcaster.pairUp(netPair);
-							tmpListener.pairUp(netPair);
-
-							manager.addConnection(netPair);
-
-							Logging.log("Connected to " + tmpBroadcaster.socket);
-							netPair.ready();
-						}
-					}.start();
+					connect.onConnect(manager,soc,server);
 
 
 				} catch (Exception e) {

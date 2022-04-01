@@ -1,4 +1,4 @@
-package ONCE.networking;
+package ONCE.networking.messages;
 
 import java.net.*;
 import java.io.*;
@@ -10,6 +10,7 @@ import java.io.*;
  */
 public class MessageHeader implements Serializable {
 
+	public static final int DISCONNECT_MESSAGE = -2;
 	public static final int REJECTION_MESSAGE = -1;
 	public static final int NETWORK_MESSAGE = 1;
 	public static final int COMMUNICATION_MESSAGE = 2;

@@ -1,6 +1,7 @@
 package ONCE.networking;
 
 import ONCE.core.*;
+import ONCE.networking.messages.*;
 
 import java.io.*;
 import java.net.*;
@@ -136,7 +137,7 @@ public class NetManager {
 	 * Broadcasts a message to all known connections
 	 * @param msg Message to be broadcasted
 	 */
-	public void broadcastAll(MessageHeader msg) {
+	public void broadcastAll(Message msg) {
 		Logging.log("Broadcasting " + msg);
 		try {
 			readLock.lock();

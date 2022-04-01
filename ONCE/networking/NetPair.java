@@ -1,6 +1,7 @@
 package ONCE.networking;
 
 import ONCE.core.*;
+import ONCE.networking.messages.*;
 
 import java.io.*;
 import java.net.*;
@@ -41,8 +42,10 @@ public class NetPair {
 		// do not remove
 		if (disconnected)
 			return;
-		listener.disconnect();
-		broadcaster.disconnectWithMessage();
+		if (listener != null)
+			listener.disconnect();
+		if (broadcaster != null)
+			broadcaster.disconnectWithMessage();
 	}
 
 	/**
