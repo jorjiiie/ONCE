@@ -95,6 +95,7 @@ public class NetSocket {
 	 */
 	public void disconnectWithMessage() {
 
+		// this should be part of protocol
 		MessageHeader m = new MessageHeader(MessageHeader.DISCONNECT_MESSAGE, System.currentTimeMillis(), null);
 		Message msg = new Message(m, null);
 		proto.sendMessage(msg);

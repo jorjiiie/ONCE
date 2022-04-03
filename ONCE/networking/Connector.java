@@ -37,8 +37,9 @@ public class Connector {
 	 * @param pt port to open on
 	 * @param addr address to open on
 	 */ 
-	public Connector(int pt, InetAddress addr) {
+	public Connector(int pt, InetAddress addr, Client client) {
 		self = this;
+		host = client;
 		try {
 			server = new ServerSocket(pt, 50, addr);
 			port = pt;
@@ -91,8 +92,6 @@ public class Connector {
 	public void connect(String addr, int port) {
 		Logging.log("Connecting to " + addr + " on port " + port);
 
-		// is a new thread necessary?
-		// I don't think so
 		new Thread() {
 			public void run() {
 				try {
@@ -134,6 +133,7 @@ public class Connector {
 
 					NetPair netPair = new NetPair(null, tmpBroadcaster);
 					manager.addConnection(netPair);
+					Logging.log("Broadcasting connection to " + addr + ":" +port);
 					tmpBroadcaster.initProtocol();
 					tmpBroadcaster.connect(server.getInetAddress(),server.getLocalPort());
 

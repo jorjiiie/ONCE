@@ -1,6 +1,7 @@
 package ONCE.core;
 
 import java.math.BigInteger;
+import java.io.Serializable;
 
 /*
  * Ryan Zhu
@@ -8,10 +9,9 @@ import java.math.BigInteger;
  * 
  */
 
-public class Transaction {
+public class Transaction implements Serializable {
 
 	// transactions also must have a identifier otherwise you could reuse transactions
-	private RSA signer;
 	private BigInteger reciever, sender;
 	private long amount;
 	private BigInteger signature;
@@ -21,7 +21,6 @@ public class Transaction {
 
 
 	public Transaction(BigInteger _reciever, BigInteger _sender, long amt) {
-		signer = new RSA(_sender);
 		reciever = _reciever;
 		sender = _sender;
 		amount = amt;
@@ -48,6 +47,7 @@ public class Transaction {
 	public boolean verify() {
 		if (signature == null)
 			return false;
+		RSA signer = new RSA(sender);
 		return signer.verify(HashUtils.sHash(toString()), signature);
 	}
 	public String getHash() {

@@ -3,6 +3,7 @@ package ONCE.core;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.Random;
+import java.io.Serializable;
 /*
  * Ryan Zhu
  * Block that has transactions and a hash that uses transaction + 
@@ -15,7 +16,7 @@ import java.util.Random;
 // do binary comparisons rather than binary -> string -> binary (java moment lol)
 // the nonusage of string would probably make the hashing about 20x faster but it really doesnt matter lol
 
-public class Block {
+public class Block implements Serializable {
 	
 	// tHash is a local variable used for verification (transaction hash)
 	public static final int MINING_DIFFICULTY = 25;
@@ -23,17 +24,31 @@ public class Block {
 	private byte[] byteHash;
 	private Transaction[] transactions;
 	private long salt;
+
+	// lmao what is this please do not do this just have a long as timestamp...
 	private Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 	private String timeString;
 	private BigInteger miner;
 	private int depth;
 	private Random rand;
 		
+	/**
+	 * Constructor for a block
+	 * @param _transactions transactions array
+	 * @param _miner public address for the miner of the block
+	 */
 	public Block(Transaction[] _transactions, BigInteger _miner) {
 		transactions = _transactions;
 		miner = _miner;
 		rand = new Random(System.nanoTime());
 	}
+
+	/**
+	 * Constructs for a block, used when reading off disc or recieving a new block
+	 * @param _transactions transactions array
+	 * @param _miner public address for the miner of the block
+	 * @param _blockHash _blockHash hash of the block
+	 */
 	public Block(Transaction[] _transactions, BigInteger _miner, String _blockHash, String _previousHash, long _salt, int _depth, Timestamp _timestamp) {
 		transactions = _transactions;
 		miner = _miner;
@@ -44,10 +59,12 @@ public class Block {
 		timestamp = _timestamp;
 		rand = new Random(System.nanoTime());
 	}
+
 	public String toString() {
 		blockHash = HashUtils.byteToHex(byteHash);
 		return blockHash + " " + tHash + " " + previousHash + " " + salt + " " + miner + " " + depth + " " + timestamp;
 	}
+
 	// for hash
 	public String str() {
 		return tHash + " " + previousHash + " " + salt + " " + miner + " " + depth + " " + timeString;
@@ -69,9 +86,10 @@ public class Block {
 			}
 		}
 		hashTransactions();
-		System.out.println("hi");
-		System.out.println(toString());
-		System.out.println(HashUtils.sHash(str()));
+		blockHash = HashUtils.byteToHex(byteHash);
+		// System.out.println("hi");
+		// System.out.println(toString());
+		// System.out.println(HashUtils.sHash(str()));
 		return (blockHash.equals(HashUtils.sHash(str())));
 	}
 	public void setTime() {
@@ -115,6 +133,10 @@ public class Block {
 	}
 	public String getBlockHash() {
 		return blockHash;
+	}
+
+	public String getPrevious() {
+		return previousHash;
 	}
 
 	/**

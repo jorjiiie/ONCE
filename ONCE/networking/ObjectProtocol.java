@@ -159,6 +159,13 @@ public class ObjectProtocol extends Protocol {
 					CommunicationMessage cm = (CommunicationMessage) msg.data;
 					Logging.log("Recieved message: " + cm.message + " from " + cm.author);
 					break;
+				case 3:
+					BlockMessage bm = (BlockMessage) msg.data;
+					Logging.log("Recieved block");
+					Connector.self.host.addBlock(bm.block);
+					Logging.log("PRINTING BLOCKS: " );
+					Connector.self.host.printBlocks();
+					break;
 
 			}
 		}

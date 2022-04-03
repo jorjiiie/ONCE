@@ -15,6 +15,8 @@ import java.util.Scanner;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.math.BigInteger;
+import java.lang.Long;
 
 // this is a MINING CLIENT (?)
 // we can have non-mining clients that just broadcast transactions (no listeners, only some broadcasters)
@@ -22,7 +24,9 @@ public class Client {
 
 	public static Client hostClient;
 
-	// private HashMap<String, Block> blockchain;
+	// should likely move to their own class to make it more modular
+	private HashMap<String, Block> blockchain;
+	private HashMap<BigInteger, Long> balances;
 	// private HashSet<Block> blockchain;
 	// inefficient lol
 	private HashMap<String, Transaction> existingTransactions;
@@ -34,9 +38,15 @@ public class Client {
 
 	private Connector connector;
 
+	Block block2send = null;
+
 	// probably an addblock method
 	public Client() {
 		hostClient = this;
+		
+		blockchain = new HashMap<String, Block>();
+
+		balances = new HashMap<BigInteger, Long>();
 	}
 	public static void test(Client client) {
 		Scanner in = new Scanner(System.in);
@@ -70,6 +80,9 @@ public class Client {
 						String txt = in.nextLine();
 						System.out.print("Author: " );
 						String auth = in.nextLine();
+
+						// this should be in object protocol, and should just have the interface
+						// for handling different types of messages
 						CommunicationMessage cm = new CommunicationMessage(txt,auth);
 						MessageHeader header = new MessageHeader(MessageHeader.COMMUNICATION_MESSAGE, System.currentTimeMillis(), null);
 						Message msg = new Message(header, cm);
@@ -77,7 +90,12 @@ public class Client {
 						client.connector.broadcastMessage(msg);
 
 					} else if (nxt == 6) {
-
+						// send the block
+						Logging.log("Sending the block");
+						BlockMessage bm = new BlockMessage(client.block2send);
+						MessageHeader header = new MessageHeader(MessageHeader.BLOCK_MESSAGE, System.currentTimeMillis(), null);
+						Message msg = new Message(header, bm);
+						client.connector.broadcastMessage(msg);
 					}
 					else if (nxt == -1) {
 						client.connector.shutdown();
@@ -90,6 +108,36 @@ public class Client {
 
 			}
 		}.start();
+	}
+
+	public boolean addBlock(Block b) {
+		Logging.log("hi");
+		String prevBlock = b.getPrevious();
+
+		/*
+		if (blockchain.isEmpty() == false) {
+			if (prevBlock == null) {
+					return false;
+			}
+			if (blockchain.get(prevBlock) == null) {
+				return false;
+			}
+		}
+		*/
+
+		
+		// validate block
+		if (b.verify() == false) {
+			return false;
+		}
+		blockchain.put(b.getBlockHash(), b);
+		return true;
+	}
+
+	public void printBlocks() {
+		for (Block b : blockchain.values()) {
+			Logging.log(b.toString());
+		}
 	}
 	public static void main(String[] args) {
 		InetAddress addr = null;
@@ -120,9 +168,29 @@ public class Client {
 		} else if (args.length > 0) {
 			pt = Integer.parseInt(args[0]);
 		}
-		client.connector = new Connector(pt, addr);
+		client.connector = new Connector(pt, addr, client);
 		client.connector.listen();
 		test(client);
+
+		RSA carl = new RSA();
+		RSA joe = new RSA();
+
+		Transaction[] ts = new Transaction[10];
+		for (int i=0;i<10;i++) {
+			ts[i] = new Transaction(carl.getPublic(), joe.getPublic(), 5);
+			ts[i].sign(joe);
+			System.out.println(ts[i].verify());
+		}
+
+		Block nb = new Block(ts, carl.getPublic());
+
+		nb.hashTransactions();
+		nb.hash();
+
+		client.block2send = nb;
+		client.addBlock(nb);
+		client.printBlocks();
+
 	}
 	
 }
