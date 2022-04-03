@@ -61,7 +61,10 @@ public class Connector {
 	}
 
 	// for the next three consider making manager package public...
+	// i think we can have netmanager AND connector be in host, and the connector can return its netmanager for
+	// host to use some time
 	/**
+	 * 
 	 * Broadcasts a message to all known connections
 	 * @param msg message to broadcast
 	 */

@@ -1,7 +1,6 @@
 package ONCE.core;
 
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.Random;
 import java.io.Serializable;
 /*
@@ -20,14 +19,14 @@ public class Block implements Serializable {
 	
 	// tHash is a local variable used for verification (transaction hash)
 	public static final int MINING_DIFFICULTY = 25;
+	private String blockHeader;
 	private String blockHash, tHash, previousHash;
 	private byte[] byteHash;
 	private Transaction[] transactions;
-	private long salt;
+	private long salt = 0;
 
 	// lmao what is this please do not do this just have a long as timestamp...
-	private Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-	private String timeString;
+	private long timestamp;
 	private BigInteger miner;
 	private int depth;
 	private Random rand;
@@ -49,7 +48,7 @@ public class Block implements Serializable {
 	 * @param _miner public address for the miner of the block
 	 * @param _blockHash _blockHash hash of the block
 	 */
-	public Block(Transaction[] _transactions, BigInteger _miner, String _blockHash, String _previousHash, long _salt, int _depth, Timestamp _timestamp) {
+	public Block(Transaction[] _transactions, BigInteger _miner, String _blockHash, String _previousHash, long _salt, int _depth, long _timestamp) {
 		transactions = _transactions;
 		miner = _miner;
 		blockHash = _blockHash;
@@ -60,14 +59,45 @@ public class Block implements Serializable {
 		rand = new Random(System.nanoTime());
 	}
 
+	/**
+	 * Copy constructor
+	 * @param block block to copy
+	 * @param read true if reading off disc (complete), otherwise incomplete
+	 */
+	public Block(Block block, boolean read) {
+		if (read) {
+			byteHash = block.byteHash.clone();
+			salt = block.salt;
+			blockHash = block.blockHash;
+			tHash = block.tHash;
+			transactions = block.transactions.clone();
+		}
+
+		timestamp = block.timestamp;
+		previousHash = block.previousHash;
+		depth = block.depth;
+		
+
+
+		rand = new Random(System.nanoTime());
+	}
+
 	public String toString() {
 		blockHash = HashUtils.byteToHex(byteHash);
-		return blockHash + " " + tHash + " " + previousHash + " " + salt + " " + miner + " " + depth + " " + timestamp;
+		return "Hash: " + blockHash + "\nTransaction Hash: " + tHash + "\nPrevious Block: " + previousHash + "\nSalt: " + salt + "\nMiner: " + miner + "\nDepth: " + depth + "\nTimestamp: " + timestamp;
 	}
 
 	// for hash
+	public String setBlockHeader() {
+		timestamp = System.currentTimeMillis();
+		blockHeader = ""+tHash+previousHash+ miner+ depth+timestamp;
+		return blockHeader;
+	}
+	public String getBlockHeader() {
+		return blockHeader;
+	}
 	public String str() {
-		return tHash + " " + previousHash + " " + salt + " " + miner + " " + depth + " " + timeString;
+		return blockHeader+salt;
 	}
 	public void hashTransactions() {
 		if (transactions.length < 1)
@@ -92,16 +122,12 @@ public class Block implements Serializable {
 		// System.out.println(HashUtils.sHash(str()));
 		return (blockHash.equals(HashUtils.sHash(str())));
 	}
-	public void setTime() {
-		timestamp.setTime(System.currentTimeMillis());
-		timeString = timestamp.toString();
-	}
+
 	public String hashString() {	
 		salt = rand.nextLong();
 		return blockHash= HashUtils.sHash(str());
 	}
 	public void hash() {
-		salt = rand.nextLong();
 		byteHash = HashUtils.hash(str());
 	}
 	public boolean lessThan(String cmp) {
@@ -116,6 +142,7 @@ public class Block implements Serializable {
 		}
 		return false;
 	}
+
 	public boolean lessThan(int n) {
 		// compare this hash to (0 * n) 1
 		// if less than, returns true
@@ -131,14 +158,43 @@ public class Block implements Serializable {
 			}
 		return current < n;
 	}
+
+	public static boolean lessThan(byte[] hash, int n) {
+		int current = 256;
+		outer:
+			for (int i=0;i<32;i++) {
+				for (int j=7;j>=0;j--) {
+					if (((hash[i] & (1 << j)) != 0)) {
+						current = i*8 + (7-j);
+						break outer;
+					}
+				}
+			}
+		return current < n;
+	}
 	public String getBlockHash() {
 		return blockHash;
+	}
+
+	public void setHash(byte[] hash) {
+		byteHash = hash.clone();
+		blockHash = HashUtils.byteToHex(byteHash);
 	}
 
 	public String getPrevious() {
 		return previousHash;
 	}
 
+	public void setPrevious(String prev) {
+		previousHash = prev;
+	}
+	public void setSalt(long _salt) {
+		salt = _salt;
+	}
+
+	public void newSalt() {
+		salt = rand.nextLong();
+	}
 	/**
 	 * Gets hash code of the block, which is just the hashcode of the hash from BigInteger
 	 * @return hash code
@@ -169,10 +225,11 @@ public class Block implements Serializable {
 		long start = System.currentTimeMillis();
 		long cnt = 0;
 		do {
+			nb.newSalt();
 			nb.hash();
 			cnt++;
 			//System.out.println("hello");
-		} while (nb.lessThan(16));
+		} while (nb.lessThan(25));
 		long end = System.currentTimeMillis();
 		System.out.println(cnt + " hashes in " + (end-start) + " ms or " + cnt*1000.0/(end-start) + "h/s");
 		System.out.println(nb);

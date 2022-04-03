@@ -3,12 +3,14 @@ package ONCE.client;
 import ONCE.networking.*;
 import ONCE.networking.messages.*;
 import ONCE.core.*;
+import ONCE.mining.MiningManager;
 /*
  * Ryan Zhu
  * Client class. Keeps one main hashmap in memory (not disk lol! expecting blockchain to stay small) which is the blockchain (hash:block) itself, as well as transactions of users (hash:transaction, if one transaction == existing hash, auto reject) 
  * Also houses the threads used for networking and mining
  *
  */
+// make these imports specific
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
@@ -32,11 +34,17 @@ public class Client {
 	private HashMap<String, Transaction> existingTransactions;
 	// private NetworkBroadcaster broadcaster;
 
-	private ArrayList<MiningThread> miners;
-	// so we can update protocol
-	public final int VERSION_NUMBER = 0;
 
+	// so we can update protocol
+	public final int VERSION_NUMBER = 1;
+
+	// LMAO
+	public static final int MINING_DIFFICULTY = Block.MINING_DIFFICULTY;
+
+	private Block lastBlock;
 	private Connector connector;
+	private MiningManager miningManager;
+	private int currentDepth = 0;
 
 	Block block2send = null;
 
@@ -47,6 +55,8 @@ public class Client {
 		blockchain = new HashMap<String, Block>();
 
 		balances = new HashMap<BigInteger, Long>();
+
+		miningManager = new MiningManager(this);
 	}
 	public static void test(Client client) {
 		Scanner in = new Scanner(System.in);
@@ -96,6 +106,13 @@ public class Client {
 						MessageHeader header = new MessageHeader(MessageHeader.BLOCK_MESSAGE, System.currentTimeMillis(), null);
 						Message msg = new Message(header, bm);
 						client.connector.broadcastMessage(msg);
+					} else if (nxt == 7) {
+						Logging.log("Starting miners");
+						client.miningManager.resumeMining();
+
+					} else if (nxt == 8) {
+						Logging.log("Pausing miners");
+						client.miningManager.pauseMining();
 					}
 					else if (nxt == -1) {
 						client.connector.shutdown();
@@ -114,7 +131,7 @@ public class Client {
 		Logging.log("hi");
 		String prevBlock = b.getPrevious();
 
-		/*
+		
 		if (blockchain.isEmpty() == false) {
 			if (prevBlock == null) {
 					return false;
@@ -123,17 +140,23 @@ public class Client {
 				return false;
 			}
 		}
-		*/
 
-		
 		// validate block
 		if (b.verify() == false) {
 			return false;
 		}
+		// needs the less
+		if (b.lessThan(MINING_DIFFICULTY) == false) {
+			return false;
+		}
 		blockchain.put(b.getBlockHash(), b);
+		currentDepth++;
 		return true;
 	}
 
+	public int getDepth() {
+		return currentDepth;
+	}
 	public void printBlocks() {
 		for (Block b : blockchain.values()) {
 			Logging.log(b.toString());
