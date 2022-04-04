@@ -28,6 +28,7 @@ public class Client {
 
 	// should likely move to their own class to make it more modular
 	private HashMap<String, Block> blockchain;
+
 	private HashMap<BigInteger, Long> balances;
 	// private HashSet<Block> blockchain;
 	// inefficient lol

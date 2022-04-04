@@ -6,6 +6,7 @@ import ONCE.core.HashUtils;
 import java.util.Random;
 public class MiningThread extends Thread {
 
+	public static final int HASHES_PER_CYCLE = 10000;
 	private Random rnd;
 	private String blockHeader;
 	private boolean stopSignal = false;
@@ -24,10 +25,10 @@ public class MiningThread extends Thread {
 
 	@Override
 	public void run() {
-		while (stopSignal != true) {
+		for (int i=0;i<HASHES_PER_CYCLE; i++) {
 			long salt = rnd.nextLong();
 			byte[] hash = HashUtils.hash(blockHeader+salt);
-			if (!Block.lessThan(hash, 25)) {
+			if (!Block.lessThan(hash, 15)) {
 				MiningManager.self.foundHash(hash, salt);
 			}
 		}

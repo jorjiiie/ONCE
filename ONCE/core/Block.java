@@ -2,6 +2,7 @@ package ONCE.core;
 
 import java.math.BigInteger;
 import java.util.Random;
+import java.util.ArrayList;
 import java.io.Serializable;
 /*
  * Ryan Zhu
@@ -22,7 +23,11 @@ public class Block implements Serializable {
 	private String blockHeader;
 	private String blockHash, tHash, previousHash;
 	private byte[] byteHash;
-	private Transaction[] transactions;
+	// private Transaction[] transactions;
+
+	// no merkle !
+	private ArrayList<Transaction> transactions;
+
 	private long salt = 0;
 
 	// lmao what is this please do not do this just have a long as timestamp...
@@ -37,7 +42,11 @@ public class Block implements Serializable {
 	 * @param _miner public address for the miner of the block
 	 */
 	public Block(Transaction[] _transactions, BigInteger _miner) {
-		transactions = _transactions;
+
+		transactions = new ArrayList<Transaction>();
+		for (int i=0; i<_transactions.length; i++) {
+			transactions.add(_transactions[i]);
+		}
 		miner = _miner;
 		rand = new Random(System.nanoTime());
 	}
@@ -49,8 +58,13 @@ public class Block implements Serializable {
 	 * @param _blockHash _blockHash hash of the block
 	 */
 	public Block(Transaction[] _transactions, BigInteger _miner, String _blockHash, String _previousHash, long _salt, int _depth, long _timestamp) {
-		transactions = _transactions;
+
+		transactions = new ArrayList<Transaction>();
+		for (int i=0; i<_transactions.length; i++) {
+			transactions.add(_transactions[i]);
+		}
 		miner = _miner;
+
 		blockHash = _blockHash;
 		previousHash = _previousHash;
 		salt = _salt;
@@ -70,9 +84,11 @@ public class Block implements Serializable {
 			salt = block.salt;
 			blockHash = block.blockHash;
 			tHash = block.tHash;
-			transactions = block.transactions.clone();
+			transactions = new ArrayList<Transaction>(block.transactions.size());
+			for (int i=0; i<transactions.size(); i++) {
+				transactions.set(i,block.transactions.get(i));
+			}
 		}
-
 		timestamp = block.timestamp;
 		previousHash = block.previousHash;
 		depth = block.depth;
@@ -100,21 +116,20 @@ public class Block implements Serializable {
 		return blockHeader+salt;
 	}
 	public void hashTransactions() {
-		if (transactions.length < 1)
+		if (transactions.size() < 1)
 			return;
-		tHash = HashUtils.sHash(transactions[0].toString());
-		for (int i=1;i<transactions.length;i++) {
-			tHash = HashUtils.sHash(tHash + transactions[i].toString());
-		}
+		tHash = HashUtils.sHash(transactions.get(0).toString());
+		for (Transaction tx : transactions)
+			tHash = HashUtils.sHash(tHash + tx.toString());
 	}
 	public boolean verify() {
 		// verify that everything is cash money
 		// if any transactions are faulty
-		for (int i=0;i<transactions.length;i++) {
-			if (transactions[i].verify() == false) {
+		for (Transaction tx : transactions) {
+			if (tx.verify() == false)
 				return false;
-			}
 		}
+
 		hashTransactions();
 		blockHash = HashUtils.byteToHex(byteHash);
 		// System.out.println("hi");
