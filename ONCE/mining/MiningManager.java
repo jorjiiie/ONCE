@@ -12,65 +12,119 @@ import ONCE.core.Logging;
 import ONCE.core.*;
 
 import java.util.ArrayList;
+import java.util.concurrent.FutureTask;
 
 public class MiningManager extends Thread {
 	public static MiningManager self;
 
 	Client host;
- 	ArrayList<MiningThread> miners;
+
 	Block currentBlock;
 	private	boolean running = false;
+	private boolean paused = false;
+	private int num_threads;
+	Thread[] miners;
+	String header;
+
 	public MiningManager(Client client) {
-		miners = new ArrayList<MiningThread>();
 		// limit to 3 for now
 		host = client;
 		self = this;
+		num_threads = 3;
+		miners = new Thread[num_threads];
+	}
+	public MiningManager(Client client, int threads) {
+		this(client);
+		num_threads = threads;
+		miners = new Thread[num_threads];
 	}
 	public void setBlock(Block b) {
 		currentBlock = b;
-		currentBlock.setBlockHeader();
-	}
-	public void addMiner(MiningThread thread) {
-		miners.add(thread);
-	}
-	public void addMiners(int x) {
-		for (int i=0;i<x;i++) {
-			miners.add(new MiningThread(currentBlock.getBlockHeader(),i));
-		}
+		updateBlock();
+
 	}
 
 	public void updateBlock() {
-		String header = currentBlock.setBlockHeader();
-		for (MiningThread thread : miners) {
-			thread.setBlock(header);
-		}
+		header = currentBlock.setBlockHeader();
 	}
 
 	// resume mining
 	@Override
 	public void run() {
+
+		System.out.println("HI\n");
 		running = true;
+		paused = false;
+		// if 
 		while (running) {
-			updateBlock();
-			for (MiningThread thread : miners) {
-				if (thread.isAlive() == false)
-					thread.start();
+			if (paused) {
+				try {
+					//sleep for a bit before checking for state again
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+
+					Logging.log("Miners were not running, no nothing to pause");
+					continue;
 				}
+			}
+			else {
+				updateBlock();
+				FutureTask<?>[] tasks = new FutureTask[num_threads];
+				// create new threads & start them off
+				for (int i=0;i<num_threads;i++) {
+					tasks[i] = new FutureTask<HashReturn>(new MiningTask(header, i));
+					try {
+						miners[i] = new Thread(tasks[i]);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					miners[i].start();
+				}
+
+				// join them all
+				for (int i=0;i<num_threads;i++) {
+					try {
+						// this stalls lmao but it's fine...
+						// instead, we could have a constantly running task like the above
+						// but then it would be much harder to return?
+						// this is the best solution i have right now lol
+						HashReturn ret = (HashReturn) tasks[i].get();
+						System.out.println(ret.salt + " "  + ret.success);
+					} catch (Exception e) {
+						e.printStackTrace();
+						Logging.log("no idea what happened but something is very wrong");
+						return;
+					}
+				}
+
+
+			}
 		}
 	}
+
+	// maybe dont need this im confused
 	@Override
 	public void interrupt() {
-		Logging.log("Pausing");
+		Logging.log("Shutting down miners");
 		running = false;
 	}
 
+	@Override
+	public void start() {
+		Logging.log("STARTED\n");
+		paused = false;
+		running = true;
+		super.start();
+	}
 	public void resumeMining() {
 		// run if not already running
-		this.start();
+		updateBlock();
+
+		paused = false;
 	}
 
 	public void pauseMining() {
-		this.interrupt();
+		paused = true;
 	}
 	public void addTransaction(Transaction tx) {
 		// add a hash - turn transaction into arraylist lmao
@@ -87,6 +141,7 @@ public class MiningManager extends Thread {
 		currentBlock.hash();
 		Logging.log(currentBlock.toString());
 
+		host.addBlock(currentBlock);
 		pauseMining();
 	}
 	public static void main(String[] args) {
@@ -108,7 +163,7 @@ public class MiningManager extends Thread {
 		MiningManager manager = new MiningManager(null);
 		manager.setBlock(nb);
 		Logging.log("hi\n");
-		manager.addMiners(5);
+		manager.start();
 		manager.resumeMining();
 		Logging.log(nb.getBlockHeader());
 		nb.hash();
