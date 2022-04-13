@@ -1,16 +1,5 @@
 package ONCE.networking.messages;
 
-/*
- * Message base class that we can use to check for message types
- * This is a protorype version and should (and will hopefully) be removed when I am less lazy
- * 0 - reject and go back to neutral state
- * 1 - message header
- * 2 - block
- * 3 - transaction
- * 4 - ip
- * 5 - request?
- * 6 - connect message
- */
 
 import java.io.Serializable;
 
@@ -19,7 +8,6 @@ import java.io.Serializable;
  * @author jorjiiie
  */
 
-// in future plans to make language agnostic, I think it's still ok but header should include a size in bytes
 public class Message implements Serializable {
 
     public final MessageHeader header;

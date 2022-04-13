@@ -27,7 +27,8 @@ public class Client {
 	public static Client hostClient;
 
 	// should likely move to their own class to make it more modular
-	private HashMap<String, Block> blockchain;
+	// private HashMap<String, Block> blockchain;
+	Blockchain blockchain;
 
 	private HashMap<BigInteger, Long> balances;
 	// private HashSet<Block> blockchain;
@@ -47,13 +48,14 @@ public class Client {
 	private MiningManager miningManager;
 	private int currentDepth = 0;
 
+	Block currentBlock;
 	Block block2send = null;
 
 	// probably an addblock method
 	public Client() {
 		hostClient = this;
 		
-		blockchain = new HashMap<String, Block>();
+		blockchain = new Blockchain();
 
 		balances = new HashMap<BigInteger, Long>();
 
@@ -66,7 +68,7 @@ public class Client {
 			public void run() {
 				int nxt = 0;
 				while (true) {
-					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n-1: Shutdown");
+					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n7: start mining\n8: stop mining\n-1: Shutdown");
 					nxt = in.nextInt();
 					if (nxt == 1) {
 						
@@ -103,11 +105,16 @@ public class Client {
 					} else if (nxt == 6) {
 						// send the block
 						Logging.log("Sending the block");
-						BlockMessage bm = new BlockMessage(client.block2send);
+						BlockMessage bm = new BlockMessage(client.currentBlock);
 						MessageHeader header = new MessageHeader(MessageHeader.BLOCK_MESSAGE, System.currentTimeMillis(), null);
 						Message msg = new Message(header, bm);
 						client.connector.broadcastMessage(msg);
 					} else if (nxt == 7) {
+						System.out.println("Hash of previous block:");
+						in.nextLine();
+						String str = in.nextLine();
+						client.currentBlock.setPrevious(str);
+						client.miningManager.setBlock(client.currentBlock);
 						Logging.log("Starting miners");
 						client.miningManager.resumeMining();
 
@@ -127,41 +134,32 @@ public class Client {
 			}
 		}.start();
 	}
+	public void addBlock(Block b) {
 
-	public boolean addBlock(Block b) {
-		Logging.log("hi");
-		String prevBlock = b.getPrevious();
+		// only propogate and add if not already there
+		if (blockchain.queryBlock(b.getBlockHash()) == null) {
+			// currentBlock = blockchain.addBlock(b);
+			currentBlock.setPrevious(blockchain.addBlock(b).getBlockHash());
+			// sendmessage
+			BlockMessage bm = new BlockMessage(b);
+			MessageHeader header = new MessageHeader(MessageHeader.BLOCK_MESSAGE, System.currentTimeMillis(), null);
+			Message msg = new Message(header, bm);
+			Logging.log("Broadcasting block that we just recieved");
+			connector.broadcastMessage(msg);
+			// should also set a new block to use
+			miningManager.pauseMining();
+			miningManager.setBlock(currentBlock);
+			// miningManager.resumeMining();
 
-		
-		if (blockchain.isEmpty() == false) {
-			if (prevBlock == null) {
-					return false;
-			}
-			if (blockchain.get(prevBlock) == null) {
-				return false;
-			}
 		}
 
-		// validate block
-		if (b.verify() == false) {
-			return false;
-		}
-		// needs the less
-		if (b.lessThan(MINING_DIFFICULTY) == false) {
-			return false;
-		}
-		blockchain.put(b.getBlockHash(), b);
-		currentDepth++;
-		return true;
 	}
 
 	public int getDepth() {
 		return currentDepth;
 	}
 	public void printBlocks() {
-		for (Block b : blockchain.values()) {
-			Logging.log(b.toString());
-		}
+		blockchain.printBlocks();
 	}
 	public static void main(String[] args) {
 		InetAddress addr = null;
@@ -210,10 +208,11 @@ public class Client {
 
 		nb.hashTransactions();
 		nb.hash();
-
+		client.currentBlock = nb;
 		client.block2send = nb;
-		client.addBlock(nb);
-		client.printBlocks();
+		client.miningManager.setBlock(nb);
+		// client.addBlock(nb);
+		// client.printBlocks();
 
 	}
 	

@@ -19,7 +19,7 @@ import java.io.Serializable;
 public class Block implements Serializable {
 	
 	// tHash is a local variable used for verification (transaction hash)
-	public static final int MINING_DIFFICULTY = 25;
+	public static final int MINING_DIFFICULTY = 20;
 	private String blockHeader;
 	private String blockHash, tHash, previousHash;
 	private byte[] byteHash;
@@ -105,16 +105,31 @@ public class Block implements Serializable {
 
 	// for hash
 	public String setBlockHeader() {
-		timestamp = System.currentTimeMillis();
 		blockHeader = ""+tHash+previousHash+ miner+ depth+timestamp;
 		return blockHeader;
 	}
 	public String getBlockHeader() {
 		return blockHeader;
 	}
-	public String str() {
-		return blockHeader+salt;
+
+	public String getHeaderMiner() {
+		return tHash+previousHash+ miner+depth;
 	}
+
+	/**
+	 * Returns the full block header that is used for hashing
+	 * Since the salt will not change between calls, it is assumed that the code that uses this will change the salt
+	 * @return salt concatenated to the blockHeader
+	 */
+	public String str() {
+		return tHash+previousHash+ miner+depth+timestamp+salt;
+	}
+
+	/**
+	 * Hash the transactions into a linear thing LOL
+	 */
+	// if you transitioned into a merkletree then you don't need to send the whole tree during sending, only the header
+	// and tx and the other person can build it themselves
 	public void hashTransactions() {
 		if (transactions.size() < 1)
 			return;
@@ -122,9 +137,25 @@ public class Block implements Serializable {
 		for (Transaction tx : transactions)
 			tHash = HashUtils.sHash(tHash + tx.toString());
 	}
+
+	/**
+	 * Checks if transaction is already in + is valid and updates the transaction hash as well
+	 * @param t transaction
+	 */
+	public void addTransaction(Transaction t) {
+		if (t==null || t.verify() == false || transactions.contains(t))
+			return;
+
+		transactions.add(t);
+
+		tHash = HashUtils.sHash(tHash + t.toString());
+	}
+	/**
+	 * Verify that the block is valid (Not the data integrity but rather the hash)
+	 * @return boolean determining validity of the block
+	 */
 	public boolean verify() {
-		// verify that everything is cash money
-		// if any transactions are faulty
+
 		for (Transaction tx : transactions) {
 			if (tx.verify() == false)
 				return false;
@@ -138,26 +169,47 @@ public class Block implements Serializable {
 		return (blockHash.equals(HashUtils.sHash(str())));
 	}
 
+	/**
+	 * Not necessary and likely useless
+	 * @return hash of the block in hex
+	 */
 	public String hashString() {	
 		salt = rand.nextLong();
 		return blockHash= HashUtils.sHash(str());
 	}
+	/**
+	 * Hashes the block
+	 * Sets the byteHash to the sha-256 hash
+	 */
 	public void hash() {
 		byteHash = HashUtils.hash(str());
 	}
+
+	/**
+	 * Compares the hash of the block to a string
+	 * @param cmp string to compare to
+	 * @return true if less than, false otherwise
+	 */
 	public boolean lessThan(String cmp) {
+		// this is likely useless
 		String bHash = HashUtils.hexToByte(blockHash);
 		int minLength = Math.min(cmp.length(), bHash.length());
 		for (int i=0;i<minLength;i++) {
 			if (cmp.charAt(i) != bHash.charAt(i)) {
 				if (cmp.charAt(i) == '1')
-					return false;
-				return true;
+					return true;
+				return false;
 			}
 		}
 		return false;
 	}
 
+	// should rename leadingzeroes
+	/**
+	 * Primary method for checking if less than
+	 * @param n minimum number of leading zeroes
+	 * @return true if number of leading zeroes >= n
+	 */
 	public boolean lessThan(int n) {
 		// compare this hash to (0 * n) 1
 		// if less than, returns true
@@ -174,6 +226,12 @@ public class Block implements Serializable {
 		return current < n;
 	}
 
+	/**
+	 * Same as {@link lessThan(int)} but static
+	 * @param hash sha-256 hash of the block
+	 * @param n minimum number of leading zeroes
+	 * @return true if number of leading zeroes >= n
+	 */
 	public static boolean lessThan(byte[] hash, int n) {
 		int current = 256;
 		outer:
@@ -187,6 +245,11 @@ public class Block implements Serializable {
 			}
 		return current < n;
 	}
+
+	/**
+	 * returns the hash of the block
+	 * @return hash of the block
+	 */
 	public String getBlockHash() {
 		return blockHash;
 	}
@@ -207,6 +270,15 @@ public class Block implements Serializable {
 		salt = _salt;
 	}
 
+	public int getDepth() {
+		return depth;
+	}
+	public void setTimestamp(long ts) {
+		timestamp = ts;
+	}
+	public long getTimestamp() {
+		return timestamp;
+	}
 	public void newSalt() {
 		salt = rand.nextLong();
 	}
@@ -214,15 +286,6 @@ public class Block implements Serializable {
 	 * Gets hash code of the block, which is just the hashcode of the hash from BigInteger
 	 * @return hash code
 	 */
-	// means about ~44000 blocks before collisions
-	// this is definitely NOT language agnostic but it's not necessary bc each language can handle
-	// the hashsets/database differently
-	@Override 
-	public int hashCode() {
-
-		System.out.println(byteHash.hashCode() +" " + HashUtils.byteToHex(byteHash));
-		return (new BigInteger(byteHash)).hashCode();
-	}
 	public static void main(String[] args) {
 		long st = System.currentTimeMillis();
 		RSA carl = new RSA();

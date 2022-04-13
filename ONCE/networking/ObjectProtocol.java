@@ -161,10 +161,8 @@ public class ObjectProtocol extends Protocol {
 					break;
 				case 3:
 					BlockMessage bm = (BlockMessage) msg.data;
-					Logging.log("Recieved block");
+					Logging.log("Recieved block" + bm.block);
 					Connector.self.host.addBlock(bm.block);
-					Logging.log("PRINTING BLOCKS: " );
-					Connector.self.host.printBlocks();
 					break;
 
 			}

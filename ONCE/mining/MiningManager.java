@@ -22,8 +22,8 @@ public class MiningManager extends Thread {
 	Block currentBlock;
 	private	boolean running = false;
 	// should be atomicboolean
-	private boolean paused = false;
-	private boolean firstPause = true;
+	private volatile boolean paused = false;
+	private volatile boolean firstPause = true;
 	private int num_threads;
 	Thread[] miners;
 	String header;
@@ -47,33 +47,25 @@ public class MiningManager extends Thread {
 	}
 	public void setBlock(Block b) {
 		currentBlock = b;
-		updateBlock();
-
+		header = currentBlock.getHeaderMiner();
 	}
 
-	public void updateBlock() {
-		header = currentBlock.setBlockHeader();
-	}
 
-	public void foundBlock(int salt) {
+	public void foundBlock(long ts, long salt) {
 		// send the salt in
 		paused = true;
 		// call back to host to add the found block, which is the block as the salt is set the found salt
-
+		Logging.log("Found blockuos " + ts + " " + salt);
+		currentBlock.setSalt(salt);
+		currentBlock.setTimestamp(ts);
 	}
 
 	@Override
 	public void run() {
 
-		// this should only return if we have found a block
-		// otherwise,
-		System.out.println("HI\n");
 		running = true;
 		paused = false;
-		// if 
-		int cnt = 0;
-		long begin = System.currentTimeMillis();
-		while (running && cnt < 500) {
+		while (running) {
 			if (paused) {
 				try {
 					if (firstPause) {
@@ -83,6 +75,7 @@ public class MiningManager extends Thread {
 							miners[i] = null;
 						}
 						firstPause = false;
+						Logging.log("Cleared everything");
 					}
 					//sleep for a bit before checking for state again
 					Thread.sleep(1000);
@@ -97,7 +90,6 @@ public class MiningManager extends Thread {
 				// we do this so when it pauses, it will clear out the existing data
 
 				firstPause = true;
-				updateBlock();
 
 				// init tasks if not done, num_threads is maximum number of tasks running at once
 				for (int i=0;i<num_threads;i++) {
@@ -106,8 +98,11 @@ public class MiningManager extends Thread {
 						if (tasks[i].isDone()) {
 							try {
 								HashReturn result = (HashReturn) tasks[i].get();
-								if (result.success) 
-									foundBlock(result.salt);
+								if (result.success) {
+									System.out.println(header);
+									foundBlock(result.timestamp, result.salt);
+									break;
+								}
 
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -124,15 +119,19 @@ public class MiningManager extends Thread {
 					miners[i] = new Thread(tasks[i]);
 					miners[i].start();
 				}
-
-				// join them all
+				if (paused)
+					continue;
 				for (int i=0;i<num_threads;i++) {
 					if (tasks[i].isDone()) {
 						try {
 							// so a task doesn't stall the rest, will just request it later when it's available
 							HashReturn result = (HashReturn) tasks[i].get();
-							if (result.success)
-								foundBlock(result.salt);
+							if (result.success) {
+								System.out.println(header);
+
+								foundBlock(result.timestamp, result.salt);
+								break;
+							}
 							tasks[i] = null;
 
 							
@@ -159,7 +158,6 @@ public class MiningManager extends Thread {
 
 			}
 		}
-		System.out.println("Took " + (System.currentTimeMillis() - begin));
 	}
 
 	// maybe dont need this im confused
@@ -167,6 +165,7 @@ public class MiningManager extends Thread {
 	public void interrupt() {
 		Logging.log("Shutting down miners");
 		running = false;
+		paused = true;
 	}
 
 	@Override
@@ -177,8 +176,10 @@ public class MiningManager extends Thread {
 		super.start();
 	}
 	public void resumeMining() {
+
 		// run if not already running
-		updateBlock();
+		if (paused == false)
+			return;
 
 		paused = false;
 	}
@@ -187,8 +188,9 @@ public class MiningManager extends Thread {
 		paused = true;
 	}
 	public void addTransaction(Transaction tx) {
-		// add a hash - turn transaction into arraylist lmao
-
+		// add a transaction to the block
+		currentBlock.addTransaction(tx);
+		header = currentBlock.getHeaderMiner();		
 	}
 
 	public void foundHash(byte[] hash, long nonce) {
@@ -226,11 +228,17 @@ public class MiningManager extends Thread {
 		Logging.log("hi\n");
 		manager.start();
 		manager.resumeMining();
-		Logging.log(nb.getBlockHeader());
-		nb.hash();
 
 		// manager.pauseMining();
 
+		try {
+			Thread.sleep(10000);
+			manager.interrupt();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		nb.hash();
 		Logging.log(""+nb);
 
 
