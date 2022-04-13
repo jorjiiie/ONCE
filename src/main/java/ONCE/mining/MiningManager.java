@@ -75,7 +75,6 @@ public class MiningManager extends Thread {
 							miners[i] = null;
 						}
 						firstPause = false;
-						Logging.log("Cleared everything");
 					}
 					//sleep for a bit before checking for state again
 					Thread.sleep(1000);
@@ -99,7 +98,6 @@ public class MiningManager extends Thread {
 							try {
 								HashReturn result = (HashReturn) tasks[i].get();
 								if (result.success) {
-									System.out.println(header);
 									foundBlock(result.timestamp, result.salt);
 									break;
 								}
@@ -127,8 +125,6 @@ public class MiningManager extends Thread {
 							// so a task doesn't stall the rest, will just request it later when it's available
 							HashReturn result = (HashReturn) tasks[i].get();
 							if (result.success) {
-								System.out.println(header);
-
 								foundBlock(result.timestamp, result.salt);
 								break;
 							}
