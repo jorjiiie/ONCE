@@ -21,22 +21,29 @@ public class MiningManager extends Thread {
 
 	Block currentBlock;
 	private	boolean running = false;
+	// should be atomicboolean
 	private boolean paused = false;
+	private boolean firstPause = true;
 	private int num_threads;
 	Thread[] miners;
 	String header;
+	FutureTask<?>[] tasks;
 
 	public MiningManager(Client client) {
 		// limit to 3 for now
 		host = client;
 		self = this;
-		num_threads = 3;
+		num_threads = 8;
 		miners = new Thread[num_threads];
+		tasks = new FutureTask[num_threads];
+
 	}
 	public MiningManager(Client client, int threads) {
-		this(client);
+		host = client;
+		self = this;
 		num_threads = threads;
 		miners = new Thread[num_threads];
+		tasks = new FutureTask[num_threads];
 	}
 	public void setBlock(Block b) {
 		currentBlock = b;
@@ -48,19 +55,38 @@ public class MiningManager extends Thread {
 		header = currentBlock.setBlockHeader();
 	}
 
-	// resume mining
+	public void foundBlock(int salt) {
+		// send the salt in
+		paused = true;
+		// call back to host to add the found block, which is the block as the salt is set the found salt
+
+	}
+
 	@Override
 	public void run() {
 
+		// this should only return if we have found a block
+		// otherwise,
 		System.out.println("HI\n");
 		running = true;
 		paused = false;
 		// if 
-		while (running) {
+		int cnt = 0;
+		long begin = System.currentTimeMillis();
+		while (running && cnt < 500) {
 			if (paused) {
 				try {
+					if (firstPause) {
+						// clear threads on first pause
+						for (int i=0;i<num_threads;i++) {
+							tasks[i] = null;
+							miners[i] = null;
+						}
+						firstPause = false;
+					}
 					//sleep for a bit before checking for state again
 					Thread.sleep(1000);
+
 				} catch (InterruptedException e) {
 
 					Logging.log("Miners were not running, no nothing to pause");
@@ -68,38 +94,72 @@ public class MiningManager extends Thread {
 				}
 			}
 			else {
+				// we do this so when it pauses, it will clear out the existing data
+
+				firstPause = true;
 				updateBlock();
-				FutureTask<?>[] tasks = new FutureTask[num_threads];
-				// create new threads & start them off
+
+				// init tasks if not done, num_threads is maximum number of tasks running at once
 				for (int i=0;i<num_threads;i++) {
-					tasks[i] = new FutureTask<HashReturn>(new MiningTask(header, i));
-					try {
-						miners[i] = new Thread(tasks[i]);
-					} catch (Exception e) {
-						e.printStackTrace();
+					if (tasks[i] != null) {
+
+						if (tasks[i].isDone()) {
+							try {
+								HashReturn result = (HashReturn) tasks[i].get();
+								if (result.success) 
+									foundBlock(result.salt);
+
+							} catch (Exception e) {
+								e.printStackTrace();
+								Logging.log("no idea what happened but something is very wrong");
+								return;
+							}
+
+						} else {
+							continue;
+						}
 					}
+					// create new task
+					tasks[i] = new FutureTask<HashReturn>(new MiningTask(header, i));
+					miners[i] = new Thread(tasks[i]);
 					miners[i].start();
 				}
 
 				// join them all
 				for (int i=0;i<num_threads;i++) {
-					try {
-						// this stalls lmao but it's fine...
-						// instead, we could have a constantly running task like the above
-						// but then it would be much harder to return?
-						// this is the best solution i have right now lol
-						HashReturn ret = (HashReturn) tasks[i].get();
-						System.out.println(ret.salt + " "  + ret.success);
-					} catch (Exception e) {
-						e.printStackTrace();
-						Logging.log("no idea what happened but something is very wrong");
-						return;
+					if (tasks[i].isDone()) {
+						try {
+							// so a task doesn't stall the rest, will just request it later when it's available
+							HashReturn result = (HashReturn) tasks[i].get();
+							if (result.success)
+								foundBlock(result.salt);
+							tasks[i] = null;
+
+							
+						} catch (Exception e) {
+							e.printStackTrace();
+							Logging.log("no idea what happened but something is very wrong");
+							return;
+						}
 					}
+				}
+				try {
+					// can make ~5-10% faster by checking more frequently
+					// is it worth i dont know if i can make that decision lol but whatever
+					// it's not that big of a difference
+
+					// essentially by checking 5x more often, 10% more tasks have finished
+					// not really worth, but we are not checking that much in the first place so maybe it is a non-issue
+					Thread.sleep(5);
+
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 
 
 			}
 		}
+		System.out.println("Took " + (System.currentTimeMillis() - begin));
 	}
 
 	// maybe dont need this im confused
@@ -144,6 +204,7 @@ public class MiningManager extends Thread {
 		host.addBlock(currentBlock);
 		pauseMining();
 	}
+	
 	public static void main(String[] args) {
 		RSA carl = new RSA();
 		RSA joe = new RSA();
