@@ -7,7 +7,9 @@
   <property name="main.build.dir" location="build/main"/>
   <property name="test.src.dir" location="src/test/java"/>
   <property name="test.build.dir" value="build/test"/>
-
+  <property name="main.dist.dir" location="dist"/>
+  <property name="projname" value="ONCE"/>
+  
   <path id="classpath.test">
       <pathelement location="lib/junit-4.12.jar"/>
       <pathelement location="lib/hamcrest-core-1.3.jar"/>
@@ -43,9 +45,9 @@
   <target name="dist" depends="compile"
         description="generate the distribution">
     <!-- Create the distribution directory -->
-    <mkdir dir="${dist}/lib"/>
+    <mkdir dir="${main.dist.dir}/lib"/>
 
-    <jar jarfile="${dist}/${projname}-${DSTAMP}.jar" basedir="${build}">
+    <jar jarfile="${main.dist.dir}/${projname}-${DSTAMP}.jar" basedir="${main.build.dir}">
       <manifest>
         <attribute name="Main-Class"
                   value="ONCE.mining.MiningManager"/>
@@ -56,8 +58,9 @@
   <target name="clean"
         description="clean up">
     <!-- Delete the ${build} and ${dist} directory trees -->
-    <delete dir="${build}"/>
-    <delete dir="${dist}"/>
+    <delete dir="${main.build.dir}"/>
+    <delete dir="${test.build.dir}"/>
+    <delete dir="${main.dist.dir}"/>
   </target>
   <target name="print-version"> 
    <echo>Java/JVM version: ${ant.java.version}</echo> 
