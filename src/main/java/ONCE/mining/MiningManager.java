@@ -13,6 +13,7 @@ import ONCE.core.*;
 
 import java.util.ArrayList;
 import java.util.concurrent.FutureTask;
+import java.math.BigInteger;
 
 public class MiningManager extends Thread {
 	public static MiningManager self;
@@ -58,13 +59,12 @@ public class MiningManager extends Thread {
 		Logging.log("Found blockuos " + ts + " " + salt);
 		workingBlock.setSalt(salt);
 		workingBlock.setTimestamp(ts);
+		workingBlock.hash();
 	}
 
 	@Override
 	public void run() {
 
-		running = true;
-		paused = false;
 		while (running) {
 			if (paused) {
 				try {
@@ -166,8 +166,8 @@ public class MiningManager extends Thread {
 
 	@Override
 	public void start() {
-		Logging.log("STARTED\n");
-		paused = false;
+		Logging.log("STARTED (paused)\n");
+		paused = true;
 		running = true;
 		super.start();
 	}
@@ -184,27 +184,24 @@ public class MiningManager extends Thread {
 		paused = true;
 	}
 	public void addTransaction(Transaction tx) {
-		// add a transaction to the block
-		if (workingBlock.addTransaction(tx))
-			Logging.log("Added Transaction " + tx);
+		// add a transaction to the blockn
+		workingBlock.addTransaction(tx);
 		header = workingBlock.getHeaderMiner();		
 	}
 
-	public void foundHash(byte[] hash, long nonce) {
-		// hash is good
-
-		workingBlock.setHash(hash);
-		workingBlock.setSalt(nonce);
-		// add this block!!!
-		// host.addBlock(workingBlock);
-		workingBlock.hash();
-		Logging.log(workingBlock.toString());
-
-		host.addBlock(workingBlock);
-		pauseMining();
-	}
 	public void printWorkingBlock() {
 		Logging.log("Current block: " + workingBlock);
+	}
+
+	/**
+	 * Resets the workingBlock to a new block, indicating a block has been found
+	 * @param depth depth of current block (highest block + 1)
+	 * @param minerID id of the miner (public key)
+	 * @param hash hash of previous block
+	 */
+	public void resetBlock(int depth, BigInteger minerID, String hash) {
+		workingBlock = new Block(null, minerID, depth);
+		workingBlock.setPrevious(hash);
 	}
 	
 	public static void main(String[] args) {
@@ -218,7 +215,7 @@ public class MiningManager extends Thread {
 			System.out.println(ts[i].verify());
 		}
 
-		Block nb = new Block(ts, carl.getPublic());
+		Block nb = new Block(ts, carl.getPublic(),1);
 
 		nb.setPrevious("0000000000000000000000000000000000000000000000000000000000000000");
 		nb.hashTransactions();

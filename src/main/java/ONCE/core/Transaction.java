@@ -28,6 +28,10 @@ public class Transaction implements Serializable {
 	public String toString() {
 		return ""+reciever + "\n" + sender + "\n" + amount + "\n" + id + "\n" + hash;
 	}
+
+	public String str() {
+		return ""+reciever+sender+amount+id;
+	}
 	// needs the private key which will not be here
 	
 	private void generateID() {
@@ -36,7 +40,7 @@ public class Transaction implements Serializable {
 	public boolean sign(RSA _signer) {
 		try {
 			id = System.currentTimeMillis();
-			signature = _signer.sign(HashUtils.sHash(toString()));
+			signature = _signer.sign(HashUtils.sHash(str()));
 			setHash();
 			return true;
 		} catch(Exception e) {
@@ -49,7 +53,7 @@ public class Transaction implements Serializable {
 		if (signature == null)
 			return false;
 		RSA signer = new RSA(sender);
-		return signer.verify(HashUtils.sHash(toString()), signature);
+		return signer.verify(HashUtils.sHash(str()), signature);
 	}
 	public String getHash() {
 		return hash;

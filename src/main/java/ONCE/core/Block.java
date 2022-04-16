@@ -42,13 +42,16 @@ public class Block implements Serializable {
 	 * @param _transactions transactions array
 	 * @param _miner public address for the miner of the block
 	 */
-	public Block(Transaction[] _transactions, BigInteger _miner) {
+	public Block(Transaction[] _transactions, BigInteger _miner, int depth) {
 
 		transactions = new ArrayList<Transaction>();
-		for (int i=0; i<_transactions.length; i++) {
-			transactions.add(_transactions[i]);
+		if (_transactions != null) {
+			for (int i=0; i<_transactions.length; i++) {
+				transactions.add(_transactions[i]);
+			}
 		}
 		miner = _miner;
+		this.depth = depth;
 		rand = new Random(System.nanoTime());
 	}
 
@@ -145,7 +148,6 @@ public class Block implements Serializable {
 	 */
 	public boolean addTransaction(Transaction t) {
 		// should this do this idfk but it should work sooo
-		Logging.log("ASDJSKDJAASD\n" + t.verify());
 		if (t==null || t.verify() == false || transactions.contains(t))
 			return false;
 
@@ -310,7 +312,7 @@ public class Block implements Serializable {
 			System.out.println(ts[i].verify());
 		}
 
-		Block nb = new Block(ts, carl.getPublic());
+		Block nb = new Block(ts, carl.getPublic(),1);
 		nb.hashTransactions();
 		long start = System.currentTimeMillis();
 		long cnt = 0;

@@ -25,7 +25,7 @@ import java.lang.Long;
 public class Client {
 
 	public static Client hostClient;
-
+	private RSA user;
 	// should likely move to their own class to make it more modular
 	// private HashMap<String, Block> blockchain;
 	Blockchain blockchain;
@@ -52,7 +52,10 @@ public class Client {
 	Block block2send = null;
 
 	// probably an addblock method
-	public Client() {
+	public Client(RSA user) {
+
+		this.user = user;
+
 		hostClient = this;
 		
 		blockchain = new Blockchain();
@@ -60,6 +63,7 @@ public class Client {
 		balances = new HashMap<BigInteger, Long>();
 
 		miningManager = new MiningManager(this);
+		miningManager.start();
 	}
 	public static void test(Client client) {
 		Scanner in = new Scanner(System.in);
@@ -68,7 +72,7 @@ public class Client {
 			public void run() {
 				int nxt = 0;
 				while (true) {
-					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n7: start mining\n8: stop mining\n9: fabricate new transaction\n10: List working block\n-1: Shutdown");
+					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n7: start mining\n8: stop mining\n9: fabricate new transaction\n10: List working block\n11: Reset block\n-1: Shutdown");
 					nxt = in.nextInt();
 					if (nxt == 1) {
 						// ????
@@ -110,6 +114,7 @@ public class Client {
 						Message msg = new Message(header, bm);
 						client.connector.broadcastMessage(msg);
 					} else if (nxt == 7) {
+						// change this
 						System.out.println("Hash of previous block:");
 						in.nextLine();
 						String str = in.nextLine();
@@ -126,14 +131,14 @@ public class Client {
 						System.out.print("quantity: ");
 						long amt = in.nextLong();
 						RSA joe = new RSA();
-						RSA fred = new RSA();
-						Transaction ntx = new Transaction(joe.getPublic(), fred.getPublic(), amt);
-						ntx.sign(fred);
-						System.out.println(ntx.verify() + " this is pretty cash money???");
+						Transaction ntx = new Transaction(joe.getPublic(), client.user.getPublic(), amt);
+						ntx.sign(client.user);
 						client.addTransaction(ntx);
 
 					} else if (nxt == 10) {
 						client.miningManager.printWorkingBlock();
+					} else if (nxt == 11) {
+						client.miningManager.resetBlock(1, client.user.getPublic(), Block.GENESIS_HASH);
 					}
 					else if (nxt == -1) {
 						client.connector.shutdown();
@@ -174,6 +179,7 @@ public class Client {
 	 */
 	public void addTransaction(Transaction tx) {
 		miningManager.addTransaction(tx);
+		// start mining if didnt? nah manual mining
 	}
 
 	public int getDepth() {
@@ -194,7 +200,10 @@ public class Client {
 			Logging.log("error finding to localhost");
 			System.exit(0);
 		}
-		Client client = new Client();
+		RSA carl = new RSA();
+		RSA joe = new RSA();
+
+		Client client = new Client(carl);
 
 		int pt = 8069;
 		if (args.length > 1) {
@@ -213,10 +222,8 @@ public class Client {
 		}
 		client.connector = new Connector(pt, addr, client);
 		client.connector.listen();
-		test(client);
+		
 
-		RSA carl = new RSA();
-		RSA joe = new RSA();
 
 		Transaction[] ts = new Transaction[10];
 		for (int i=0;i<10;i++) {
@@ -225,13 +232,14 @@ public class Client {
 			System.out.println(ts[i].verify());
 		}
 
-		Block nb = new Block(ts, carl.getPublic());
+		Block nb = new Block(ts, carl.getPublic(),1);
 
 		nb.hashTransactions();
 		nb.hash();
 		client.currentBlock = nb;
 		client.block2send = nb;
 		client.miningManager.setBlock(nb);
+		test(client);
 		// client.addBlock(nb);
 		// client.printBlocks();
 
