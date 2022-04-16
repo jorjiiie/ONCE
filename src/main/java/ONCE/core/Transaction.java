@@ -26,7 +26,7 @@ public class Transaction implements Serializable {
 		amount = amt;
 	}
 	public String toString() {
-		return ""+reciever + "\n" + sender + "\n" + amount + "\n" + id;
+		return ""+reciever + "\n" + sender + "\n" + amount + "\n" + id + "\n" + hash;
 	}
 	// needs the private key which will not be here
 	
@@ -37,6 +37,7 @@ public class Transaction implements Serializable {
 		try {
 			id = System.currentTimeMillis();
 			signature = _signer.sign(HashUtils.sHash(toString()));
+			setHash();
 			return true;
 		} catch(Exception e) {
 			System.out.println("hello!\n");

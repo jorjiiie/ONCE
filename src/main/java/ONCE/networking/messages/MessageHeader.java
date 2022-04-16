@@ -15,6 +15,7 @@ public class MessageHeader implements Serializable {
 	public static final int NETWORK_MESSAGE = 1;
 	public static final int COMMUNICATION_MESSAGE = 2;
 	public static final int BLOCK_MESSAGE = 3;
+	public static final int TRANSACTION_MESSAGE = 4;
 
 	public final int type;
 	public final long timestamp;

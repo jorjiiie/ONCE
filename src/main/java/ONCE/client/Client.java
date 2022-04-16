@@ -68,10 +68,10 @@ public class Client {
 			public void run() {
 				int nxt = 0;
 				while (true) {
-					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n7: start mining\n8: stop mining\n-1: Shutdown");
+					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n7: start mining\n8: stop mining\n9: fabricate new transaction\n10: List working block\n-1: Shutdown");
 					nxt = in.nextInt();
 					if (nxt == 1) {
-						
+						// ????
 					} else if (nxt == 2) {
 						
 
@@ -121,6 +121,19 @@ public class Client {
 					} else if (nxt == 8) {
 						Logging.log("Pausing miners");
 						client.miningManager.pauseMining();
+					} else if (nxt == 9) {
+						// we only have two choices sooo
+						System.out.print("quantity: ");
+						long amt = in.nextLong();
+						RSA joe = new RSA();
+						RSA fred = new RSA();
+						Transaction ntx = new Transaction(joe.getPublic(), fred.getPublic(), amt);
+						ntx.sign(fred);
+						System.out.println(ntx.verify() + " this is pretty cash money???");
+						client.addTransaction(ntx);
+
+					} else if (nxt == 10) {
+						client.miningManager.printWorkingBlock();
 					}
 					else if (nxt == -1) {
 						client.connector.shutdown();
@@ -153,6 +166,14 @@ public class Client {
 
 		}
 
+	}
+
+	/**
+	 * Defines behavior when a transaction is recieved from the network
+	 * @param tx transaction to add
+	 */
+	public void addTransaction(Transaction tx) {
+		miningManager.addTransaction(tx);
 	}
 
 	public int getDepth() {

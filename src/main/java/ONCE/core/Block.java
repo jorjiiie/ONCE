@@ -20,6 +20,7 @@ public class Block implements Serializable {
 	
 	// tHash is a local variable used for verification (transaction hash)
 	public static final int MINING_DIFFICULTY = 20;
+	public static final String GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000";
 	private String blockHeader;
 	private String blockHash, tHash, previousHash;
 	private byte[] byteHash;
@@ -142,13 +143,17 @@ public class Block implements Serializable {
 	 * Checks if transaction is already in + is valid and updates the transaction hash as well
 	 * @param t transaction
 	 */
-	public void addTransaction(Transaction t) {
+	public boolean addTransaction(Transaction t) {
+		// should this do this idfk but it should work sooo
+		Logging.log("ASDJSKDJAASD\n" + t.verify());
 		if (t==null || t.verify() == false || transactions.contains(t))
-			return;
+			return false;
 
 		transactions.add(t);
 
 		tHash = HashUtils.sHash(tHash + t.toString());
+
+		return true;
 	}
 	/**
 	 * Verify that the block is valid (Not the data integrity but rather the hash)
@@ -278,6 +283,13 @@ public class Block implements Serializable {
 	}
 	public long getTimestamp() {
 		return timestamp;
+	}
+	public Transaction[] getTransactions() {
+		Transaction[] ret = new Transaction[transactions.size()];
+		for (int i=0;i<transactions.size();i++) {
+			ret[i] = transactions.get(i);
+		}
+		return ret;
 	}
 	public void newSalt() {
 		salt = rand.nextLong();

@@ -63,6 +63,18 @@ public class ObjectProtocol extends Protocol {
 			Logging.log("Error while writing message");
 		}
 	}
+	public void sendMessage(Block b) {
+	}
+	public void sendMessage(Transaction tx) {
+
+		TransactionMessage txMessage = new TransactionMessage(tx);
+
+		MessageHeader header = new MessageHeader(MessageHeader.TRANSACTION_MESSAGE, System.currentTimeMillis(), txMessage.checksum());
+
+		Message msg = new Message(header, txMessage);
+
+		sendMessage(msg);
+	}
 	public void onConnect(NetManager manager, Socket soc, ServerSocket server) {
 		// just do a thing on connect...
 		new Thread() {
@@ -161,9 +173,13 @@ public class ObjectProtocol extends Protocol {
 					break;
 				case 3:
 					BlockMessage bm = (BlockMessage) msg.data;
-					Logging.log("Recieved block" + bm.block);
+					Logging.log("Recieved block " + bm.block);
 					Connector.self.host.addBlock(bm.block);
 					break;
+				case 4:
+					TransactionMessage tm = (TransactionMessage) msg.data;
+					Logging.log("Recieved transaction message " + tm.tx);
+					Connector.self.host.addTransaction(tm.tx);
 
 			}
 		}

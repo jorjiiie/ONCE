@@ -19,7 +19,7 @@ public class MiningManager extends Thread {
 
 	Client host;
 
-	Block currentBlock;
+	Block workingBlock;
 	private	boolean running = false;
 	// should be atomicboolean
 	private volatile boolean paused = false;
@@ -46,8 +46,8 @@ public class MiningManager extends Thread {
 		tasks = new FutureTask[num_threads];
 	}
 	public void setBlock(Block b) {
-		currentBlock = b;
-		header = currentBlock.getHeaderMiner();
+		workingBlock = b;
+		header = workingBlock.getHeaderMiner();
 	}
 
 
@@ -56,8 +56,8 @@ public class MiningManager extends Thread {
 		paused = true;
 		// call back to host to add the found block, which is the block as the salt is set the found salt
 		Logging.log("Found blockuos " + ts + " " + salt);
-		currentBlock.setSalt(salt);
-		currentBlock.setTimestamp(ts);
+		workingBlock.setSalt(salt);
+		workingBlock.setTimestamp(ts);
 	}
 
 	@Override
@@ -185,22 +185,26 @@ public class MiningManager extends Thread {
 	}
 	public void addTransaction(Transaction tx) {
 		// add a transaction to the block
-		currentBlock.addTransaction(tx);
-		header = currentBlock.getHeaderMiner();		
+		if (workingBlock.addTransaction(tx))
+			Logging.log("Added Transaction " + tx);
+		header = workingBlock.getHeaderMiner();		
 	}
 
 	public void foundHash(byte[] hash, long nonce) {
 		// hash is good
 
-		currentBlock.setHash(hash);
-		currentBlock.setSalt(nonce);
+		workingBlock.setHash(hash);
+		workingBlock.setSalt(nonce);
 		// add this block!!!
-		// host.addBlock(currentBlock);
-		currentBlock.hash();
-		Logging.log(currentBlock.toString());
+		// host.addBlock(workingBlock);
+		workingBlock.hash();
+		Logging.log(workingBlock.toString());
 
-		host.addBlock(currentBlock);
+		host.addBlock(workingBlock);
 		pauseMining();
+	}
+	public void printWorkingBlock() {
+		Logging.log("Current block: " + workingBlock);
 	}
 	
 	public static void main(String[] args) {
