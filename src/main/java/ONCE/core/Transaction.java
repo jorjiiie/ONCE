@@ -11,8 +11,12 @@ import java.io.Serializable;
 
 public class Transaction implements Serializable {
 
-	// transactions also must have a identifier otherwise you could reuse transactions
+	// should be final but i made pretty bad design choices earlier lol
+	// can use the sha256 hash of the bigint as a string lol?
+	// yes lol i think that would be just better, although sender still has to be in biginteger form (but its aids to read otherwise)
 	private BigInteger reciever, sender;
+	// public key of sender
+	private BigInteger pubKey;
 	private long amount;
 	private BigInteger signature;
 	private long id; // generates random number on sign, client will check whether or not that identifier has been used already
@@ -25,6 +29,12 @@ public class Transaction implements Serializable {
 		sender = _sender;
 		amount = amt;
 	}
+	public Transaction(BigInteger reciever, RSA sender, long amount) {
+		this.reciever = reciever;
+		this.sender = sender.getPublic();
+		this.amount = amount;
+		sign(sender);
+	}
 	public String toString() {
 		return ""+reciever + "\n" + sender + "\n" + amount + "\n" + id + "\n" + hash;
 	}
@@ -32,11 +42,7 @@ public class Transaction implements Serializable {
 	public String str() {
 		return ""+reciever+sender+amount+id;
 	}
-	// needs the private key which will not be here
-	
-	private void generateID() {
-		id = (long) (Math.random() * (1<<30)) * (long)(Math.random() * (1<<30)); 
-	}
+
 	public boolean sign(RSA _signer) {
 		try {
 			id = System.currentTimeMillis();
@@ -48,9 +54,18 @@ public class Transaction implements Serializable {
 			return false;
 		}
 	}
+	public BigInteger getReciever() {
+		return reciever;
+	}
+	public BigInteger getSender() {
+		return sender;
+	}
+	public long getAmount() {
+		return amount;
+	}
 
 	public boolean verify() {
-		if (signature == null)
+		if (signature == null || reciever == null || sender == null || hash == null)
 			return false;
 		RSA signer = new RSA(sender);
 		return signer.verify(HashUtils.sHash(str()), signature);

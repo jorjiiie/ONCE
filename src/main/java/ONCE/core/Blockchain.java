@@ -2,6 +2,7 @@ package ONCE.core;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.math.BigInteger;
 public class Blockchain {
 
 	// need to turn in to a db but for now, do this
@@ -11,6 +12,10 @@ public class Blockchain {
 	// also need a db
 	// also needs a lock
 	private HashMap<String, Transaction> mainTxChain;
+
+	// technically have a max balance but this is implementation agnostic (god i love the word agnostic dont I)
+	private HashMap<BigInteger, Long> balances;
+
 	// when a new highest block is found, go back until both blocks are at a common ancestor
 	// highest block
 	private Block highestBlock = null;
@@ -18,9 +23,27 @@ public class Blockchain {
 	public Blockchain() {
 		// new blockchain wub a dub dub
 		blockchain = new HashMap<String, BlockRecord>();
+
+		mainTxChain = new HashMap<String, Transaction>();
+
+		balances = new HashMap<BigInteger, Long>();
 		highestBlock = null;
 	}
 
+	public Blockchain(Blockchain toCopy) {
+		blockchain = new HashMap<String, BlockRecord>(toCopy.blockchain);
+		mainTxChain = new HashMap<String, Transaction>(toCopy.mainTxChain);
+		balances = new HashMap<BigInteger, Long>(toCopy.balances);
+		highestBlock = toCopy.highestBlock;
+	}
+
+	// add a block to the blockchain, definitely good to go though (must be checked)
+	private void addToBlockchain(Block b) {
+		BlockRecord newRec = new BlockRecord(b,0);
+		blockchain.put(b.getBlockHash(), newRec);
+		addTransactions(b);
+		Logging.log("Block accepted into blockchain");
+	}
 	/**
 	 * Adds a block to the blockchain
 	 * Unless a block is invalid (bad transactions, fake hash, etc), it will always add the block regardless of depth
@@ -29,16 +52,19 @@ public class Blockchain {
 	 * @param b Block to be added
 	 * @return highest level block
 	 */
-	public Block addBlock(Block b) {
+	public boolean addBlock(Block b) {
+		b.prep();
 		String prevBlock = b.getPrevious();
-		
+
 		// check for genesis & make sure it is the right one
-		if (prevBlock == Block.GENESIS_HASH) {
+		if (prevBlock.equals(Block.GENESIS_HASH)) {
 			// only make one of these :sunglasses:
 			// check the message/other stuff
 			// do nothing else
+			addToBlockchain(b);
 			highestBlock = b;
-			return highestBlock;
+			Logging.log("GENSIS BLOCK ADDED, highest block is " + highestBlock);
+			return true;
 		} 
 
 		BlockRecord rec = blockchain.get(prevBlock);
@@ -46,38 +72,48 @@ public class Blockchain {
 		// nothing was found
 		if (rec == null) {
 			Logging.log("Block rejected for having invalid previous block");
-			return highestBlock;
+			return false;
 		}
 
 		// timestamp has to be afterwards
 		if (b.getTimestamp() <= rec.block.getTimestamp()) {
 			Logging.log("Block rejected for having a bad timestamp (before previous block");
-			return highestBlock;
+			return false;
 		}
 
 		// validate block
-		if (b.verify() == false) {
+		if (verifyTransactions(b) == false) {
 			// THIS HAS TO CHECK FOR MONEYS TOOO
 			// this (will somehow) check for the hashes too so the same one can't be used twice,
 			// new id generated on each one 
-			Logging.log("Block rejected for being invalid (transactions or hash");
-			return highestBlock;
+			Logging.log("Block rejected for being invalid (transactions or hash)");
+			return false;
 		}
 
-		if (b.lessThan(Block.MINING_DIFFICULTY) == false) {
+		if (b.lessThan(Block.MINING_DIFFICULTY) == true) {
 			Logging.log("Block rejected for being less than acceptable diffculty");
-			return highestBlock;
+			return false;
 		}
 
-		BlockRecord newRec = new BlockRecord(b, 0);
-		Logging.log("Block accepted into blockchain");
-		blockchain.put(b.getBlockHash(), newRec);
 
 		// update transaction count
 		incConfirmations(b.getBlockHash());
 
 		// if this is the new highest block, we have some issues to go through
-		if (highestBlock.getDepth() < b.getDepth()) {
+		// add another if statement for if previous hash == highestblock
+		if (highestBlock.getBlockHash() == b.getPrevious()) {
+			if (highestBlock.getDepth() != b.getDepth() - 1) {
+				Logging.log("Rejected for having bad depth");
+				return false;
+			}
+			highestBlock = b;
+
+
+		}
+		else if (highestBlock.getDepth() < b.getDepth()) {
+
+			// alternatively we can just go backwards and redo the entire blockchain...
+			// copy hashmap so we don't do something sketchy
 			// now we have to go backwards & figure out the transactions
 			HashSet<String> seenHashes = new HashSet<String>();
 
@@ -95,7 +131,7 @@ public class Blockchain {
 					Block tempBlock = queryBlock(currentHash_Old);
 					if (tempBlock == null) {
 						Logging.log("Something is very wrong in blockchain, kind of incomplete or data is bad");						// force it to break out???
-						break;
+						return false;
 					}
 					currentHash_Old = tempBlock.getPrevious();
 				}
@@ -110,12 +146,13 @@ public class Blockchain {
 						boolean res = removeTransactions(queryBlock(currentHash_New));
 						if (res == false) {
 							Logging.log("Something went wrong removing ancestors when resolving new highest block, probably about to crash");
+							return false;
 						}
 					}
 					Block tempBlock = queryBlock(currentHash_New);
 					if (tempBlock == null) {
 						Logging.log("Something is very wrong in blockchain, kind of incomplete or data is bad");
-						break outer;
+						return false;
 					}
 					currentHash_New = tempBlock.getPrevious();
 				}
@@ -138,10 +175,21 @@ public class Blockchain {
 			}
 
 			highestBlock = b;
+		} else {
+
 		}
 
+
+		addToBlockchain(b);
+		balances.compute(b.getMiner(), (k,v) -> (v==null)?Block.BLOCK_REWARD:v+Block.BLOCK_REWARD);
+
 		Logging.log("Added block, highest block is " + highestBlock);
-		return highestBlock;
+		return true;
+	}
+
+	public boolean testAdd(Block b) {
+		Blockchain tmp = new Blockchain(this);
+		return (tmp.addBlock(b));
 	}
 	public void incConfirmations(String hash) {
 		BlockRecord rec =  blockchain.get(hash);
@@ -152,6 +200,62 @@ public class Blockchain {
 		}
 	}
 
+	public Block getHighestBlock() {
+		return highestBlock;
+	}
+
+	/**
+	 * Verifies transactions for validity & balance
+	 * @param b block with transactions
+	 * @return true if valid, false if not
+	 */
+	public boolean verifyTransactions(Block b) {
+		Transaction[] txArray = b.getTransactions();
+
+		HashMap<BigInteger, Long> tempBalance = new HashMap<BigInteger, Long>();
+		for (Transaction tx : txArray) {
+			// if already contains or invalid
+			if (mainTxChain.containsKey(tx.getHash()) || !tx.verify()) {
+				return false;
+			}
+			// honestly might be easier to have input/output transactions
+			// but this way it is UNTRACEABLE LOLLL
+			// but yeah input/output transactions would be hella easy
+
+			tempBalance.compute(tx.getReciever(), (k,v) -> (v==null)?tx.getAmount():v+tx.getAmount());
+			tempBalance.compute(tx.getSender(), (k,v) -> (v==null)?-tx.getAmount():v-tx.getAmount());
+
+
+			Logging.log("ADDED A TRANSACTION SOMEHOW");
+			tempBalance.forEach((k,v) -> Logging.log(""+HashUtils.sHash(k.toString()) +": " + v));
+			Logging.log("Balance of sender: " + balances.getOrDefault(tx.getSender(),0L) + " " + tempBalance.get(tx.getSender()));
+			if (balances.getOrDefault(tx.getSender(),0L) + tempBalance.get(tx.getSender()) < 0) {
+				// broke ass bitch
+				Logging.log("SOMEBODY IS TOO POOR: " + tx.getSender() + " trying to send " + tx.getAmount() + " to : " + tx.getReciever());
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Verifies a singular transaction for validity & balance
+	 * @param tx transaction
+	 * @return true if valid, false if not
+	 */
+	public boolean verifyTransaction(Transaction tx) {
+		if (mainTxChain.containsKey(tx.getHash()) || !tx.verify()) {
+			Logging.log("Transaction already in blockchain or transaction failed verification");
+			return false;
+		}
+
+		if (balances.getOrDefault(tx.getSender(),0L) - tx.getAmount() < 0) {
+			Logging.log("broke ass bitch");
+			return false;
+		}
+
+		return true;
+	}
 	/**
 	 * Adds transactions of Block b into the hashmap
 	 * @param b block with transactions
@@ -160,12 +264,22 @@ public class Blockchain {
 	public boolean addTransactions(Block b) {
 		Transaction[] txArray = b.getTransactions();
 
+
 		for (Transaction tx : txArray) {
 			if (mainTxChain.containsKey(tx.getHash())) 
 				return false;
 		}
-		for (Transaction tx : txArray) {
+
+		System.out.println("ADDING " + txArray.length + " transactions");
+		for (Transaction tx : txArray) { 
 			mainTxChain.put(tx.getHash(), tx);
+			System.out.println(tx.getAmount() + " " + balances.getOrDefault(tx.getReciever(),0L) + " " + balances.getOrDefault(tx.getSender(),0L));
+
+			balances.compute(tx.getReciever(), (k,v) -> (v==null)?tx.getAmount():v+tx.getAmount());
+			// assumes this guy exists, otherwise wouldn't pass 
+			balances.compute(tx.getSender(), (k,v) -> v-tx.getAmount());
+			System.out.println(tx.getAmount() + " " + balances.getOrDefault(tx.getReciever(),0L) + " " + balances.getOrDefault(tx.getSender(),0L));
+
 		}
 		return true;
 	}
@@ -184,6 +298,7 @@ public class Blockchain {
 		}
 		for (Transaction tx : txArray) {
 			mainTxChain.remove(tx.getHash());
+			// add back balance...
 		}
 		return true;
 	}
@@ -199,6 +314,15 @@ public class Blockchain {
 		if (rec == null)
 			return null;
 		return rec.block;
+	}
+
+	public void printBalances() {
+		Logging.log("printing balances :(");
+		balances.forEach((k,v) -> Logging.log("Address " + k + ": " + v + " coins"));
+	}
+
+	public Long queryBalance(BigInteger address) {
+		return balances.getOrDefault(address, 0L);
 	}
 	// class for handling block records
 	// this makes adding blocks O(n) which is not the best...

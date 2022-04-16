@@ -26,30 +26,17 @@ public class Client {
 
 	public static Client hostClient;
 	private RSA user;
-	// should likely move to their own class to make it more modular
-	// private HashMap<String, Block> blockchain;
-	Blockchain blockchain;
 
-	private HashMap<BigInteger, Long> balances;
-	// private HashSet<Block> blockchain;
-	// inefficient lol
-	private HashMap<String, Transaction> existingTransactions;
-	// private NetworkBroadcaster broadcaster;
-
+	private	Blockchain blockchain;
 
 	// so we can update protocol
 	public final int VERSION_NUMBER = 1;
 
-	// LMAO
-	public static final int MINING_DIFFICULTY = Block.MINING_DIFFICULTY;
-
-	private Block lastBlock;
+	private Block highestBlock;
 	private Connector connector;
 	private MiningManager miningManager;
-	private int currentDepth = 0;
 
-	Block currentBlock;
-	Block block2send = null;
+	private Block currentBlock;
 
 	// probably an addblock method
 	public Client(RSA user) {
@@ -60,7 +47,6 @@ public class Client {
 		
 		blockchain = new Blockchain();
 
-		balances = new HashMap<BigInteger, Long>();
 
 		miningManager = new MiningManager(this);
 		miningManager.start();
@@ -72,7 +58,7 @@ public class Client {
 			public void run() {
 				int nxt = 0;
 				while (true) {
-					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n7: start mining\n8: stop mining\n9: fabricate new transaction\n10: List working block\n11: Reset block\n-1: Shutdown");
+					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n7: start mining\n8: stop mining\n9: fabricate new transaction\n10: List working block\n11: Reset block\n12: Print balances (lol)\n-1: Shutdown");
 					nxt = in.nextInt();
 					if (nxt == 1) {
 						// ????
@@ -114,12 +100,6 @@ public class Client {
 						Message msg = new Message(header, bm);
 						client.connector.broadcastMessage(msg);
 					} else if (nxt == 7) {
-						// change this
-						System.out.println("Hash of previous block:");
-						in.nextLine();
-						String str = in.nextLine();
-						client.currentBlock.setPrevious(str);
-						client.miningManager.setBlock(client.currentBlock);
 						Logging.log("Starting miners");
 						client.miningManager.resumeMining();
 
@@ -139,6 +119,8 @@ public class Client {
 						client.miningManager.printWorkingBlock();
 					} else if (nxt == 11) {
 						client.miningManager.resetBlock(1, client.user.getPublic(), Block.GENESIS_HASH);
+					} else if (nxt == 12) {
+						client.printBalances();
 					}
 					else if (nxt == -1) {
 						client.connector.shutdown();
@@ -155,22 +137,40 @@ public class Client {
 	public void addBlock(Block b) {
 
 		// only propogate and add if not already there
-		if (blockchain.queryBlock(b.getBlockHash()) == null) {
-			// currentBlock = blockchain.addBlock(b);
-			currentBlock.setPrevious(blockchain.addBlock(b).getBlockHash());
-			// sendmessage
-			BlockMessage bm = new BlockMessage(b);
-			MessageHeader header = new MessageHeader(MessageHeader.BLOCK_MESSAGE, System.currentTimeMillis(), null);
-			Message msg = new Message(header, bm);
-			Logging.log("Broadcasting block that we just recieved");
-			connector.broadcastMessage(msg);
-			// should also set a new block to use
-			miningManager.pauseMining();
-			miningManager.setBlock(currentBlock);
-			// miningManager.resumeMining();
 
+		if (blockchain.queryBlock(b.getBlockHash()) == null) {
+			// we only add it is accepted!
+			if (blockchain.testAdd(b)) {
+
+				blockchain.addBlock(b);
+				// make new block
+				highestBlock = blockchain.getHighestBlock();
+
+				currentBlock = new Block(null, user.getPublic(), highestBlock.getDepth()+1);
+				currentBlock.setPrevious(highestBlock.getBlockHash());
+
+				// sendmessage
+				BlockMessage bm = new BlockMessage(b);
+				MessageHeader header = new MessageHeader(MessageHeader.BLOCK_MESSAGE, System.currentTimeMillis(), null);
+				Message msg = new Message(header, bm);
+				Logging.log("Broadcasting block that we just recieved");
+				connector.broadcastMessage(msg);
+				// should also set a new block to use
+				miningManager.pauseMining();
+				
+				
+				miningManager.setBlock(currentBlock);
+			}
+			
 		}
 
+	}
+
+	/**
+	 * Prints balances of blockchain (testing func)
+	 */
+	public void printBalances() {
+		blockchain.printBalances();
 	}
 
 	/**
@@ -180,10 +180,6 @@ public class Client {
 	public void addTransaction(Transaction tx) {
 		miningManager.addTransaction(tx);
 		// start mining if didnt? nah manual mining
-	}
-
-	public int getDepth() {
-		return currentDepth;
 	}
 	public void printBlocks() {
 		blockchain.printBlocks();
@@ -227,7 +223,7 @@ public class Client {
 
 		Transaction[] ts = new Transaction[10];
 		for (int i=0;i<10;i++) {
-			ts[i] = new Transaction(carl.getPublic(), joe.getPublic(), 5);
+			ts[i] = new Transaction(carl.getPublic(), joe.getPublic(), 15);
 			ts[i].sign(joe);
 			System.out.println(ts[i].verify());
 		}
@@ -235,9 +231,10 @@ public class Client {
 		Block nb = new Block(ts, carl.getPublic(),1);
 
 		nb.hashTransactions();
+		nb.setPrevious("0000000000000000000000000000000000000000000000000000000000000000");
+
 		nb.hash();
 		client.currentBlock = nb;
-		client.block2send = nb;
 		client.miningManager.setBlock(nb);
 		test(client);
 		// client.addBlock(nb);

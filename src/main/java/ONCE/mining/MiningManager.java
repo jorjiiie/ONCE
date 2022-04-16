@@ -60,6 +60,8 @@ public class MiningManager extends Thread {
 		workingBlock.setSalt(salt);
 		workingBlock.setTimestamp(ts);
 		workingBlock.hash();
+		System.out.println(workingBlock);
+		host.addBlock(workingBlock);
 	}
 
 	@Override
@@ -70,6 +72,7 @@ public class MiningManager extends Thread {
 				try {
 					if (firstPause) {
 						// clear threads on first pause
+						Logging.log("Miners paused, clearing data");
 						for (int i=0;i<num_threads;i++) {
 							tasks[i] = null;
 							miners[i] = null;

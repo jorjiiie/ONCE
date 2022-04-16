@@ -1,4 +1,4 @@
-<project name="ONCE" default="compile" basedir=".">
+<project name="ONCE" default="test" basedir=".">
   <description>
     ONCE build file
   </description>
@@ -21,10 +21,15 @@
     <mkdir dir="${main.build.dir}"/>
     <javac srcdir="${main.src.dir}" destdir="${main.build.dir}" includeantruntime="false"/>
   </target>
+  <target name="compile-dbg"
+      description="compile with debugging">
+      <mkdir dir="${main.build.dir}"/>
+    <javac srcdir="${main.src.dir}" destdir="${main.build.dir}" debug="true" debuglevel="lines,vars,source" includeantruntime="false"/>
+  </target>
 
-  <target name="compile-test" depends="compile">
+  <target name="compile-test" depends="compile-dbg">
     <mkdir dir="${test.build.dir}"/>
-    <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" includeantruntime="false">
+    <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" debug="true" debuglevel="lines,vars,source" includeantruntime="false">
       <!-- this is for testing stuff -->
       <classpath refid="classpath.test"/>
     </javac>

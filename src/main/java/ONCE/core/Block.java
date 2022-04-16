@@ -19,8 +19,11 @@ import java.io.Serializable;
 public class Block implements Serializable {
 	
 	// tHash is a local variable used for verification (transaction hash)
-	public static final int MINING_DIFFICULTY = 20;
+	public static final int MINING_DIFFICULTY = 0;
 	public static final String GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000";
+	public static final Block GENESIS_BLOCK = getGenesis();
+	public static final long BLOCK_REWARD = 25;
+
 	private String blockHeader;
 	private String blockHash, tHash, previousHash;
 	private byte[] byteHash;
@@ -36,7 +39,14 @@ public class Block implements Serializable {
 	private BigInteger miner;
 	private int depth;
 	private Random rand;
-		
+
+	public static Block getGenesis() {
+		Block b = new Block(null, null, 0);
+		b.previousHash = GENESIS_HASH;
+		b.setTimestamp(System.currentTimeMillis());
+		b.hash();
+		return b;
+	}
 	/**
 	 * Constructor for a block
 	 * @param _transactions transactions array
@@ -49,6 +59,7 @@ public class Block implements Serializable {
 			for (int i=0; i<_transactions.length; i++) {
 				transactions.add(_transactions[i]);
 			}
+			hashTransactions();
 		}
 		miner = _miner;
 		this.depth = depth;
@@ -103,7 +114,8 @@ public class Block implements Serializable {
 	}
 
 	public String toString() {
-		blockHash = HashUtils.byteToHex(byteHash);
+		if (blockHash==null)
+			blockHash = HashUtils.byteToHex(byteHash);
 		return "Hash: " + blockHash + "\nTransaction Hash: " + tHash + "\nPrevious Block: " + previousHash + "\nSalt: " + salt + "\nMiner: " + miner + "\nDepth: " + depth + "\nTimestamp: " + timestamp;
 	}
 
@@ -265,6 +277,9 @@ public class Block implements Serializable {
 		byteHash = hash.clone();
 		blockHash = HashUtils.byteToHex(byteHash);
 	}
+	public void setHash(String hash) {
+		this.blockHash = hash;
+	}
 
 	public String getPrevious() {
 		return previousHash;
@@ -296,6 +311,27 @@ public class Block implements Serializable {
 	public void newSalt() {
 		salt = rand.nextLong();
 	}
+	public BigInteger getMiner() {
+		return miner;
+	}
+	public void prep() {
+		// the fact that i need this
+		blockHash = HashUtils.byteToHex(byteHash);
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other == null)
+			return false;
+		if (other instanceof Block) {
+			hash();
+			((Block) other).hash();
+			return byteHash.equals(((Block) other).byteHash);
+		}
+		return false;
+	}
+
+
 	/**
 	 * Gets hash code of the block, which is just the hashcode of the hash from BigInteger
 	 * @return hash code
