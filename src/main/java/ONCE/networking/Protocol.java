@@ -57,5 +57,4 @@ public abstract class Protocol extends Thread {
 	public abstract void sendMessage(Message msg);
 
 
-
 }

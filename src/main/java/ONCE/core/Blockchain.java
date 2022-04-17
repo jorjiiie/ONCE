@@ -12,9 +12,13 @@ public class Blockchain {
 	// also need a db
 	// also needs a lock
 	private HashMap<String, Transaction> mainTxChain;
-
+	private HashMap<String, Transaction> workingTxChain;
 	// technically have a max balance but this is implementation agnostic (god i love the word agnostic dont I)
+	// change this to string (hash of bigint)
 	private HashMap<BigInteger, Long> balances;
+
+	// balances of block we are currently workign on (no overspending during a block)
+	private HashMap<BigInteger, Long> workingBalances;
 
 	// when a new highest block is found, go back until both blocks are at a common ancestor
 	// highest block
@@ -27,6 +31,9 @@ public class Blockchain {
 		mainTxChain = new HashMap<String, Transaction>();
 
 		balances = new HashMap<BigInteger, Long>();
+
+		workingBalances = new HashMap<BigInteger, Long>();
+		workingTxChain = new HashMap<String, Transaction>();
 		highestBlock = null;
 	}
 
@@ -34,6 +41,8 @@ public class Blockchain {
 		blockchain = new HashMap<String, BlockRecord>(toCopy.blockchain);
 		mainTxChain = new HashMap<String, Transaction>(toCopy.mainTxChain);
 		balances = new HashMap<BigInteger, Long>(toCopy.balances);
+		workingBalances = new HashMap<BigInteger, Long>(toCopy.workingBalances);
+		workingTxChain = new HashMap<String, Transaction>(toCopy.workingTxChain);
 		highestBlock = toCopy.highestBlock;
 	}
 
@@ -42,7 +51,6 @@ public class Blockchain {
 		BlockRecord newRec = new BlockRecord(b,0);
 		blockchain.put(b.getBlockHash(), newRec);
 		addTransactions(b);
-		Logging.log("Block accepted into blockchain");
 	}
 	/**
 	 * Adds a block to the blockchain
@@ -63,7 +71,7 @@ public class Blockchain {
 			// do nothing else
 			addToBlockchain(b);
 			highestBlock = b;
-			Logging.log("GENSIS BLOCK ADDED, highest block is " + highestBlock);
+			// Logging.log("GENSIS BLOCK ADDED, highest block is " + highestBlock);
 			return true;
 		} 
 
@@ -101,7 +109,7 @@ public class Blockchain {
 
 		// if this is the new highest block, we have some issues to go through
 		// add another if statement for if previous hash == highestblock
-		if (highestBlock.getBlockHash() == b.getPrevious()) {
+		if (highestBlock.getBlockHash().equals(b.getPrevious())) {
 			if (highestBlock.getDepth() != b.getDepth() - 1) {
 				Logging.log("Rejected for having bad depth");
 				return false;
@@ -112,6 +120,7 @@ public class Blockchain {
 		}
 		else if (highestBlock.getDepth() < b.getDepth()) {
 
+			Logging.log("Switching branches of blockchain");
 			// alternatively we can just go backwards and redo the entire blockchain...
 			// copy hashmap so we don't do something sketchy
 			// now we have to go backwards & figure out the transactions
@@ -161,6 +170,7 @@ public class Blockchain {
 				step *= 2;
 			}
 
+			Logging.log("Junction: " + commonAncestor);
 			// add transactions until we are at the new top level block (go from top level -> common ancestor)
 			// we can do this blindly because it's just a greedy algorithm, we assume that the smaller subproblems are ok
 			// but when we are adding a new block from a different branch, we have to make a copy of the thing first to test balances before accepting it into the main 
@@ -183,7 +193,6 @@ public class Blockchain {
 		addToBlockchain(b);
 		balances.compute(b.getMiner(), (k,v) -> (v==null)?Block.BLOCK_REWARD:v+Block.BLOCK_REWARD);
 
-		Logging.log("Added block, highest block is " + highestBlock);
 		return true;
 	}
 
@@ -227,7 +236,7 @@ public class Blockchain {
 
 
 			Logging.log("ADDED A TRANSACTION SOMEHOW");
-			tempBalance.forEach((k,v) -> Logging.log(""+HashUtils.sHash(k.toString()) +": " + v));
+			tempBalance.forEach((k,v) -> Logging.logBalance(k,v));
 			Logging.log("Balance of sender: " + balances.getOrDefault(tx.getSender(),0L) + " " + tempBalance.get(tx.getSender()));
 			if (balances.getOrDefault(tx.getSender(),0L) + tempBalance.get(tx.getSender()) < 0) {
 				// broke ass bitch
@@ -256,6 +265,44 @@ public class Blockchain {
 
 		return true;
 	}
+
+	/**
+	 * Verifies a singular transaction for validity & balance, and adds it to a temporary list of balances to be incorporated in the next block
+	 * @param tx transaction
+	 * @return true if valid, false if not
+	 */
+	public boolean verifyWorkingTransaction(Transaction tx) {
+		if (workingTxChain.containsKey(tx.getHash()) || !tx.verify()) {
+			Logging.log("Transaction already in blockchain or transaction failed verification", "WORKING TRANSACTIONS");
+			return false;
+		}
+
+		if (balances.getOrDefault(tx.getSender(),0L) + workingBalances.getOrDefault(tx.getSender(), 0L) - tx.getAmount() < 0) {
+			Logging.log("broke ass bitch", "WORKING TRANSACTIONS");
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Adds a transaction to the working transactions
+	 * @param tx transaction 
+	 */
+	public void addWorkingTransaction(Transaction tx) {
+		workingBalances.compute(tx.getSender(), (k,v) -> (v==null) ? -tx.getAmount() : v - tx.getAmount());
+		workingBalances.compute(tx.getReciever(), (k,v) -> (v==null) ? tx.getAmount() : v + tx.getAmount());
+		workingTxChain.put(tx.getHash(), tx);
+	}
+
+	/**
+	 * Clears out working balances (should be called every time the working block is reset)
+	 */
+	public void resetWorkingTransactions() {
+		workingBalances.clear();
+		workingTxChain.clear();
+	}
+
 	/**
 	 * Adds transactions of Block b into the hashmap
 	 * @param b block with transactions
@@ -270,15 +317,11 @@ public class Blockchain {
 				return false;
 		}
 
-		System.out.println("ADDING " + txArray.length + " transactions");
 		for (Transaction tx : txArray) { 
 			mainTxChain.put(tx.getHash(), tx);
-			System.out.println(tx.getAmount() + " " + balances.getOrDefault(tx.getReciever(),0L) + " " + balances.getOrDefault(tx.getSender(),0L));
 
 			balances.compute(tx.getReciever(), (k,v) -> (v==null)?tx.getAmount():v+tx.getAmount());
-			// assumes this guy exists, otherwise wouldn't pass 
 			balances.compute(tx.getSender(), (k,v) -> v-tx.getAmount());
-			System.out.println(tx.getAmount() + " " + balances.getOrDefault(tx.getReciever(),0L) + " " + balances.getOrDefault(tx.getSender(),0L));
 
 		}
 		return true;
@@ -318,7 +361,7 @@ public class Blockchain {
 
 	public void printBalances() {
 		Logging.log("printing balances :(");
-		balances.forEach((k,v) -> Logging.log("Address " + k + ": " + v + " coins"));
+		balances.forEach((k,v) -> Logging.logBalance(k,v));
 	}
 
 	public Long queryBalance(BigInteger address) {

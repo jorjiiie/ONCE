@@ -60,7 +60,7 @@ public class MiningManager extends Thread {
 		workingBlock.setSalt(salt);
 		workingBlock.setTimestamp(ts);
 		workingBlock.hash();
-		System.out.println(workingBlock);
+		// System.out.println(workingBlock);
 		host.addBlock(workingBlock);
 	}
 
@@ -194,8 +194,18 @@ public class MiningManager extends Thread {
 
 	public void printWorkingBlock() {
 		Logging.log("Current block: " + workingBlock);
+
+		Transaction[] txArray = workingBlock.getTransactions();
+		Logging.log("Printing " + txArray.length + " transactions");
+		for (Transaction tx : txArray) {
+
+			Logging.logTx(tx);
+		}
 	}
 
+	public Block getWorkingBlock() {
+		return workingBlock;
+	}
 	/**
 	 * Resets the workingBlock to a new block, indicating a block has been found
 	 * @param depth depth of current block (highest block + 1)

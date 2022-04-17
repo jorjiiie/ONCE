@@ -63,18 +63,35 @@ public class ObjectProtocol extends Protocol {
 			Logging.log("Error while writing message");
 		}
 	}
-	public void sendMessage(Block b) {
-	}
-	public void sendMessage(Transaction tx) {
 
+	public static Message generateBlockMessage(Block b) {
+		BlockMessage bm = new BlockMessage(b);
+
+		MessageHeader header = new MessageHeader(MessageHeader.BLOCK_MESSAGE, System.currentTimeMillis(), bm.checksum());
+
+		Message msg = new Message(header, bm);
+		return msg;
+	}
+	public static Message generateTransactionMessage(Transaction tx) {
 		TransactionMessage txMessage = new TransactionMessage(tx);
 
 		MessageHeader header = new MessageHeader(MessageHeader.TRANSACTION_MESSAGE, System.currentTimeMillis(), txMessage.checksum());
 
 		Message msg = new Message(header, txMessage);
 
-		sendMessage(msg);
+		return msg;
 	}
+	public static Message generateNetworkMessage(InetAddress addr, int port) {
+		NetworkMessage info = new NetworkMessage(addr, port, 1);
+
+		MessageHeader header = new MessageHeader(MessageHeader.NETWORK_MESSAGE, System.currentTimeMillis(), info.checksum());
+
+		Message msg = new Message(header, info);
+
+		return msg;
+	}
+
+
 	public void onConnect(NetManager manager, Socket soc, ServerSocket server) {
 		// just do a thing on connect...
 		new Thread() {
@@ -126,14 +143,11 @@ public class ObjectProtocol extends Protocol {
 		}.start();
 	}
 	public void connect(InetAddress addr, int port) {
-		NetworkMessage info = new NetworkMessage(addr, port, 1);
-
-		MessageHeader header = new MessageHeader(MessageHeader.NETWORK_MESSAGE, System.currentTimeMillis(), info.checksum());
-
-		Message msg = new Message(header, info);
-
+		Message msg = generateNetworkMessage(addr, port);
 		sendMessage(msg);
+		
 	}
+	
 
 	/**
 	 * Main method that runs a loop to listen and respond

@@ -1,4 +1,4 @@
-<project name="ONCE" default="test" basedir=".">
+<project name="ONCE" default="compile" basedir=".">
   <description>
     ONCE build file
   </description>

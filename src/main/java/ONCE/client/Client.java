@@ -58,7 +58,7 @@ public class Client {
 			public void run() {
 				int nxt = 0;
 				while (true) {
-					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n7: start mining\n8: stop mining\n9: fabricate new transaction\n10: List working block\n11: Reset block\n12: Print balances (lol)\n-1: Shutdown");
+					System.out.println("1: Add new block\n2: Transmit data\n3: List connections\n4: Connect to another client\n5: Send message\n6: Display blocks\n7: start mining\n8: stop mining\n9: fabricate new transaction\n10: List working block (have fun reading :sunglasses)\n11: Reset block\n12: Print balances (lol)\n13: super cool transactions\n-1: Shutdown");
 					nxt = in.nextInt();
 					if (nxt == 1) {
 						// ????
@@ -121,6 +121,15 @@ public class Client {
 						client.miningManager.resetBlock(1, client.user.getPublic(), Block.GENESIS_HASH);
 					} else if (nxt == 12) {
 						client.printBalances();
+					} else if (nxt == 13) {
+						System.out.print("quantity: ");
+						long amt = in.nextLong();
+						System.out.print("address: " );
+						in.nextLine();
+						String s = in.nextLine();
+						BigInteger destination = new BigInteger(s,10);
+						Transaction ntx = new Transaction(destination, client.user, amt);
+						client.addTransaction(ntx);
 					}
 					else if (nxt == -1) {
 						client.connector.shutdown();
@@ -134,6 +143,21 @@ public class Client {
 			}
 		}.start();
 	}
+	/**
+	 * Resets the current block of the miner, and does associated work by also clearing blockchain temp transactions
+	 * Sets the new block in miner to begin working as well
+	 * @param depth depth of new block
+	 * @param prev hash of previous block
+	 */
+	public void resetBlock(int depth, String prev) {
+		blockchain.resetWorkingTransactions();
+
+		currentBlock = new Block(null, user.getPublic(), depth);
+		currentBlock.setPrevious(highestBlock.getBlockHash());
+		miningManager.pauseMining();
+		miningManager.setBlock(currentBlock);
+
+	}
 	public void addBlock(Block b) {
 
 		// only propogate and add if not already there
@@ -145,21 +169,15 @@ public class Client {
 				blockchain.addBlock(b);
 				// make new block
 				highestBlock = blockchain.getHighestBlock();
-
-				currentBlock = new Block(null, user.getPublic(), highestBlock.getDepth()+1);
-				currentBlock.setPrevious(highestBlock.getBlockHash());
+				Logging.log("Block accepted to blockchain");
+				Logging.log("New highest block is " + highestBlock);
 
 				// sendmessage
-				BlockMessage bm = new BlockMessage(b);
-				MessageHeader header = new MessageHeader(MessageHeader.BLOCK_MESSAGE, System.currentTimeMillis(), null);
-				Message msg = new Message(header, bm);
+				Message msg = ObjectProtocol.generateBlockMessage(b);
 				Logging.log("Broadcasting block that we just recieved");
 				connector.broadcastMessage(msg);
-				// should also set a new block to use
-				miningManager.pauseMining();
-				
-				
-				miningManager.setBlock(currentBlock);
+
+				resetBlock(highestBlock.getDepth() + 1, highestBlock.getBlockHash());
 			}
 			
 		}
@@ -178,8 +196,16 @@ public class Client {
 	 * @param tx transaction to add
 	 */
 	public void addTransaction(Transaction tx) {
-		miningManager.addTransaction(tx);
-		// start mining if didnt? nah manual mining
+		if (blockchain.verifyWorkingTransaction(tx)) {
+
+			blockchain.addWorkingTransaction(tx);
+
+			miningManager.addTransaction(tx);
+
+			Message msg = ObjectProtocol.generateTransactionMessage(tx);
+			connector.broadcastMessage(msg);
+		}
+
 	}
 	public void printBlocks() {
 		blockchain.printBlocks();
@@ -218,25 +244,12 @@ public class Client {
 		}
 		client.connector = new Connector(pt, addr, client);
 		client.connector.listen();
-		
+		Block genesis = Block.GENESIS_BLOCK;
 
+		client.addBlock(genesis);
 
-		Transaction[] ts = new Transaction[10];
-		for (int i=0;i<10;i++) {
-			ts[i] = new Transaction(carl.getPublic(), joe.getPublic(), 15);
-			ts[i].sign(joe);
-			System.out.println(ts[i].verify());
-		}
-
-		Block nb = new Block(ts, carl.getPublic(),1);
-
-		nb.hashTransactions();
-		nb.setPrevious("0000000000000000000000000000000000000000000000000000000000000000");
-
-		nb.hash();
-		client.currentBlock = nb;
-		client.miningManager.setBlock(nb);
 		test(client);
+		Logging.log("Client: " + carl.getPublic());
 		// client.addBlock(nb);
 		// client.printBlocks();
 

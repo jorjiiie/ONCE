@@ -111,8 +111,8 @@ public class NetSocket {
 	public void connect(InetAddress addr, int port) {
 		// sends a connection message w the info of this stuff
 		// do we really checksum the payload?
-		proto.connect(addr, port);
 
+		proto.connect(addr, port);
 	}
 
 	/**

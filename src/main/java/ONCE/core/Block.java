@@ -43,7 +43,9 @@ public class Block implements Serializable {
 	public static Block getGenesis() {
 		Block b = new Block(null, null, 0);
 		b.previousHash = GENESIS_HASH;
-		b.setTimestamp(System.currentTimeMillis());
+		b.setTimestamp(0);
+		// make this somewhat uniform, and you also need the blockchain catch up mechanisms so a node coming online will be caught up
+
 		b.hash();
 		return b;
 	}

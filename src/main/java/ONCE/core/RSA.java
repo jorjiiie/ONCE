@@ -12,6 +12,7 @@ import java.util.Random;
  */
 public class RSA {
 	public static final BigInteger RSA_E = new BigInteger("694201");
+	public static final int RSA_BITS = 257;
 	private BigInteger n,d;
 	public RSA() {
 		//generate  keys
@@ -21,12 +22,12 @@ public class RSA {
 		
 		// just to force RSA_E to be coprime with phi
 		while (true) {
-			p = BigInteger.probablePrime(2048, rand);
-			q = BigInteger.probablePrime(2048, rand);
+			p = BigInteger.probablePrime(RSA_BITS, rand);
+			q = BigInteger.probablePrime(RSA_BITS, rand);
 
 			// just in case they are the same (lmao never happening but you can see why i dont get shit done when im concerned about stuff like this instead of actual things)
 			while (p.equals(q)) {
-				q = BigInteger.probablePrime(2048, rand);
+				q = BigInteger.probablePrime(RSA_BITS, rand);
 			}
 
 			n = p.multiply(q);			
