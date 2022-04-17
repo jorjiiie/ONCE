@@ -19,7 +19,7 @@ public class MiningTask implements Callable<HashReturn> {
 		blockHeader = block;
 		// seeds with thread number LOL
 		rnd = new Random(id);
-		ts = System.nanoTime();
+		ts = System.currentTimeMillis();
 	}
 
 
