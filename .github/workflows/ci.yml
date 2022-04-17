@@ -13,8 +13,8 @@ jobs:
         with:
           java-version: '11'
           distribution: 'adopt'
-      - name: Build with Ant
-        run: ant compile
+      - name: build w maven
+        run: mvn compile
 
   test:
     runs-on: macos-latest
@@ -27,4 +27,4 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: run tests
-        run: ant test
+        run: mvn test
