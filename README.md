@@ -1,4 +1,4 @@
-[![Java CI](https://github.com/jorjiiie/ONCE/actions/workflows/ci.yml/badge.svg)](https://github.com/jorjiiie/ONCE/actions/workflows/ci.yml)
+[![Java CI](https://github.com/jorjiiie/ONCE/workflows/Tests/badge.svg)](https://github.com/jorjiiie/ONCE/actions/workflows/ci.yml)
 # ONCE
 
 ONCE, the coolest cryptocurrency
