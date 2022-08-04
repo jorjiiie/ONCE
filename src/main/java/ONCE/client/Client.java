@@ -252,6 +252,7 @@ public class Client {
 		Logging.log("Client: " + carl.getPublic());
 		// client.addBlock(nb);
 		// client.printBlocks();
+		System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
 	}
 	

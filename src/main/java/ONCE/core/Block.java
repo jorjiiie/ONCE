@@ -27,19 +27,20 @@ public class Block implements Serializable {
 	private String blockHeader;
 	private String blockHash, tHash, previousHash;
 	private byte[] byteHash;
-	// private Transaction[] transactions;
 
-	// no merkle !
 	private ArrayList<Transaction> transactions;
 
 	private long salt = 0;
 
-	// lmao what is this please do not do this just have a long as timestamp...
 	private long timestamp;
 	private BigInteger miner;
 	private int depth;
 	private Random rand;
 
+	/**
+	 * Retrieve genesis block
+	 * @return Gensis block (defined here)
+	 */
 	public static Block getGenesis() {
 		Block b = new Block(null, null, 0);
 		b.previousHash = GENESIS_HASH;
@@ -49,6 +50,7 @@ public class Block implements Serializable {
 		b.hash();
 		return b;
 	}
+
 	/**
 	 * Constructor for a block
 	 * @param _transactions transactions array
@@ -70,6 +72,7 @@ public class Block implements Serializable {
 
 	/**
 	 * Constructs for a block, used when reading off disc or recieving a new block
+	 * tbh since its an ass system (uses java serialization lmfao) this never should be used
 	 * @param _transactions transactions array
 	 * @param _miner public address for the miner of the block
 	 * @param _blockHash _blockHash hash of the block

@@ -36,8 +36,11 @@ public class ObjectProtocol extends Protocol {
 		try {
 			Object o = in.readObject();
 			if (o instanceof Message) {
-				// good
-				return (Message) o;
+				Message m = (Message) o;
+				if (m.verify())
+					return m;
+				else 
+					Logging.log("Checksum failed for message " + m);
 			}
 			Logging.log("Message object wasn't recieved");
 		} catch (SocketException e) {
@@ -145,13 +148,21 @@ public class ObjectProtocol extends Protocol {
 	public void connect(InetAddress addr, int port) {
 		Message msg = generateNetworkMessage(addr, port);
 		sendMessage(msg);
-		
+
 	}
 	
 
 	/**
 	 * Main method that runs a loop to listen and respond
+	 * 
 	 */
+
+	// i think instead there should be a loop in client and this just returns the message, as that makes it a lot nicer to work with
+	// inside client, you have a loop that waits like 20 ms or something between checks & does like listener[i].checkavailable or something
+	// or we can grab it with connector/network manager so we don't have to manage it and its not a pain
+	// or another superclass that has a connector, and network manager
+	// this also makes it easier to defer the things to networkmanager instead of through connector
+	// or we would end up with two levels of deferring LOL and just call the getmessage from it :skull:
 	@Override
 	public void run() {
 		// while listening, run this loop

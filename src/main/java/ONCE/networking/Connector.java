@@ -98,9 +98,7 @@ public class Connector {
 		new Thread() {
 			public void run() {
 				try {
-					// check if already connected to this port
-					NetPair np = manager.findConnection(addr, port);
-					if (np != null) 
+					if (manager.findConnection(addr, port) != null) 
 						return;
 
 					NetSocket tmpBroadcaster = new NetSocket(addr, port);

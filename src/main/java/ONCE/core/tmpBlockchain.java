@@ -1,8 +1,10 @@
+
 package ONCE.core;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.math.BigInteger;
+/*
 public class Blockchain {
 
 	// need to turn in to a db but for now, do this
@@ -59,7 +61,7 @@ public class Blockchain {
 	 * if you do this off a disc read you will get fucked as it assumes a complete blockchain (no floating blocks or smth)
 	 * @param b Block to be added
 	 * @return highest level block
-	 */
+	 *
 	public boolean addBlock(Block b) {
 		b.prep();
 		String prevBlock = b.getPrevious();
@@ -216,7 +218,7 @@ public class Blockchain {
 	 * Verifies transactions for validity & balance
 	 * @param b block with transactions
 	 * @return true if valid, false if not
-	 */
+	 *
 	public boolean verifyTransactions(Block b) {
 		Transaction[] txArray = b.getTransactions();
 
@@ -250,7 +252,7 @@ public class Blockchain {
 	 * Verifies a singular transaction for validity & balance
 	 * @param tx transaction
 	 * @return true if valid, false if not
-	 */
+	 *
 	public boolean verifyTransaction(Transaction tx) {
 		if (mainTxChain.containsKey(tx.getHash()) || !tx.verify()) {
 			Logging.log("Transaction already in blockchain or transaction failed verification");
@@ -269,7 +271,7 @@ public class Blockchain {
 	 * Verifies a singular transaction for validity & balance, and adds it to a temporary list of balances to be incorporated in the next block
 	 * @param tx transaction
 	 * @return true if valid, false if not
-	 */
+	 *
 	public boolean verifyWorkingTransaction(Transaction tx) {
 		if (workingTxChain.containsKey(tx.getHash()) || !tx.verify()) {
 			Logging.log("Transaction already in blockchain or transaction failed verification", "WORKING TRANSACTIONS");
@@ -287,7 +289,7 @@ public class Blockchain {
 	/**
 	 * Adds a transaction to the working transactions
 	 * @param tx transaction 
-	 */
+	 *
 	public void addWorkingTransaction(Transaction tx) {
 		workingBalances.compute(tx.getSender(), (k,v) -> (v==null) ? -tx.getAmount() : v - tx.getAmount());
 		workingBalances.compute(tx.getReciever(), (k,v) -> (v==null) ? tx.getAmount() : v + tx.getAmount());
@@ -296,7 +298,7 @@ public class Blockchain {
 
 	/**
 	 * Clears out working balances (should be called every time the working block is reset)
-	 */
+	 *
 	public void resetWorkingTransactions() {
 		workingBalances.clear();
 		workingTxChain.clear();
@@ -306,7 +308,7 @@ public class Blockchain {
 	 * Adds transactions of Block b into the hashmap
 	 * @param b block with transactions
 	 * @return true if transactions were successfully added, false if there is conflit (and block should be discarded)
-	 */
+	 *
 	public boolean addTransactions(Block b) {
 		Transaction[] txArray = b.getTransactions();
 
@@ -330,7 +332,7 @@ public class Blockchain {
 	 * Removes transactions of Block b from the hashmap (db)
 	 * @param b block with transactions
 	 * @return true if all transactions were successfully removed
-	 */
+	 *
 	public boolean removeTransactions(Block b) {
 		Transaction[] txArray = b.getTransactions();
 
@@ -383,3 +385,4 @@ public class Blockchain {
 	
 	}
 }
+*/
