@@ -1,4 +1,4 @@
-package ONCE.core
+package ONCE.core;
 
 import java.io.Serializable;
 
@@ -13,7 +13,7 @@ public class BlockRecord implements Serializable {
 	public BlockRecord(BlockRecord br) {
 		block = br.block;
 		confirmations = br.confirmations;
-		directChildren = br.firstChild;
+		firstChild = br.firstChild;
 	}
 
 	public boolean hasChild(String s) {

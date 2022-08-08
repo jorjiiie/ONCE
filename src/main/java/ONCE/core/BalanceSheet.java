@@ -19,7 +19,9 @@ public class BalanceSheet implements Serializable {
 	private String branchHash;
 	private String junctionHash;
 	private HashMap<String, BigInteger> balances;
-	public BalanaceSheet(String branch) {
+	public BalanceSheet(String branch) {
+		branchHash = branch;
+
 	}
 
 	public void setPreviousSheet(String junction) {

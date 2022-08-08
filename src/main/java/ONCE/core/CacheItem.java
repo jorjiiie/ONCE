@@ -25,4 +25,7 @@ class CacheItem<K extends Comparable<? super K>, V > implements Comparable<Cache
 			return comp;
 		return key.compareTo(other.key);
 	}
+	public String toString() {
+		return "[" + key.toString() + ", " + value.toString() + ", " + priority.toString() + "]";
+	}
 }

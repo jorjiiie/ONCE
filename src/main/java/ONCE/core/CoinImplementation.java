@@ -30,7 +30,7 @@ public class CoinImplementation {
 			return false;
 		if (!(other instanceof CoinImplementation))
 			return false;
-		return coins.equals((CoinImplementation) other.coins);
+		return coins.equals(((CoinImplementation) other).coins);
 	}
 
 }

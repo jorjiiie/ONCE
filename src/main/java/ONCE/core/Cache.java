@@ -1,54 +1,370 @@
-package ONCE.core;
+// package ONCE.core;
+import java.util.concurrent.ConcurrentHashMap;
 
-import java.util.TreeMap;
-import java.util.HashMap;
 
-public class Cache<K, V> extends HashMap<K, V>{
-	// maybe dont make final since different obj have different memory footprints but whatever right
+// for testing
+import java.util.HashSet;
+
+
+// must be threadsafe as well
+class Cache<K extends Comparable<? super K>, V> {
+
     private static final int CACHE_LIMIT = 10;
 
-	private TreeMap<Long, K> pq = new TreeMap<Long, K>();
-	private Long itemCount = 0L;
+	private ConcurrentHashMap<K, CacheItem<K, V> > references = new ConcurrentHashMap<K, CacheItem<K, V> >();
+	private AVLNode root;
+	private int avlSize = 0;
 
+	public Cache() {};
+	
+	public AVLNode avlQuery(CacheItem<K, V> item) {
+		AVLNode currentNode = root;
+		while (currentNode != null) {
+			int res = item.compareTo(currentNode.data);
+			if (res == 0) {
+				return currentNode;
+			}
+			if (res < 0) {
+				currentNode = currentNode.leftChild;
+			} else {
+				currentNode = currentNode.rightChild;
+			}
+		}
+		// current node is null, no hit
+		return null;
+	}
 	public V query(K key) {
-		V value = super.get(key);
-		if (value == null)
+		// query in logn
+		CacheItem<K, V> lookup = references.get(key);
+
+		AVLNode cacheHit = avlQuery(lookup);
+
+		if (cacheHit == null)
 			return null;
-		// update this to the most recently accessed so we don't clear it immediately
+
+		// avlRemove(cacheHit);
+		cacheHit.data.priority++;
+		root = avlInsert(root, cacheHit.data);
+
+		return cacheHit.data.value;
+	}
+	public void insert(K key, V value) {
+		// this is only called if the cache query misses
+		CacheItem<K, V> item = new CacheItem<K, V>(key, value, 1L);
+
+		root = avlInsert(root, item);
+		references.put(key, item);
+
+		if (avlSize <= CACHE_LIMIT) {
+			return;
+		}
+
+		/*
+		AVLNode firstNode = avlFirstItem(root);
+		references.remove(firstNode.data.key);
+		avlRemove(root, firstNode);
+		*/
 		
-		return super.get(key);
+	}
+	// not public since this should not be called from the outside
+	private void remove(K key) {
+		// for testing all things are 1 priority, so will create a cache item <k, "hi", 1L>
+		CacheItem<K, V> lookup = new CacheItem<K,V>(key, null, 1L);
+
+		root = avlRemove(root, lookup);
 	}
 
-	public boolean add(K key, V value) {
-		if (super.get(key) != null) 
-			return false;
-		// add the object & clear the next to be cleared if we are above the cache limit
-		itemCount++;
-		super.put(key, value);
-		pq.put(itemCount, key);
-		if (pq.size() > Cache.CACHE_LIMIT) {
+	// helper for avlInsert and avlRemove
+	private AVLNode avlUpdate(AVLNode node) {
+		node.updateHeight();
+		
+		int bf = node.getBalanceFactor();
 
-			Long toPop = pq.firstKey();
-			System.out.println("REMOVING ENTRY");
-			super.remove(pq.get(toPop));
-			pq.remove(toPop);
+		// System.out.println(bf);
+		// if bf != +/- 2 then I messed up somewhere 
+		assert (bf >= -2 && bf <= 2) : "balance factor is screwed up";
+
+		if (bf == 2) {
+			// right heavy
+
+			int bf2 = node.rightChild.getBalanceFactor();
+
+			if (bf2 < 0) {
+				// right left
+				node.rightChild = avlRotateRight(node.rightChild);
+				return avlRotateLeft(node);
+			} else {
+				// right right
+				return avlRotateLeft(node);
+			}
+		} else if (bf == -2) {
+			// left heavy
+
+			int bf2 = node.leftChild.getBalanceFactor();
+
+			if (bf2 <= 0) {
+				// left left
+				return avlRotateRight(node);
+			} else {
+				// left right
+				node.leftChild = avlRotateLeft(node.leftChild);
+				return avlRotateRight(node);
+			}
 		}
-		return true;
+
+		return node;
+	}
+	// returns the subtree root
+	// ex. at the first level, will return the root.
+	// at a height of h, will return the subtree rooted at x 
+	// does this so we can perform rotations and not have the parent pointer
+	private AVLNode avlInsert(AVLNode node, CacheItem<K, V> item) {
+		if (node == null)  {
+			avlSize++;
+			return new AVLNode(item);
+		}
+		
+		int res = item.compareTo(node.data);
+
+		assert res != 0 : "item inserted was somehow already in AVLTree";
+
+		if (res < 0) {
+			// go left
+			node.leftChild = avlInsert(node.leftChild, item);
+		} else {
+			// go right
+			node.rightChild = avlInsert(node.rightChild, item);
+		}
+
+		return avlUpdate(node);
+	}
+	// very similar to avlInsert, except on the first operation
+	private AVLNode avlRemove(AVLNode node, CacheItem<K, V> item) {
+		//node is ALWAYS in the tree if we call this since it was just queried for
+
+		int res = item.compareTo(node.data);
+		if (res == 0) {
+			if (node.leftChild == null) {
+				// just return the right child as it has taken its parents place
+				// if both just return null regardless
+				avlSize--;
+				return node.rightChild;
+
+			} else if (node.rightChild == null) {
+				avlSize--;
+				return node.leftChild;
+			} else {
+				// replace with the lower bound on element
+				AVLNode lowerBound = avlFirstItem(node.rightChild);
+				node.data = lowerBound.data;
+
+				node.rightChild = avlRemove(node.rightChild, lowerBound.data);
+			}
+		} else if (res < 0) {
+			node.leftChild = avlRemove(node.leftChild, item);
+		} else {
+			node.rightChild = avlRemove(node.rightChild, item);
+		}
+
+		return avlUpdate(node);
+	}
+	private AVLNode avlFirstItem(AVLNode node) {
+		AVLNode current = node;
+		while (current.leftChild != null) {
+			current = current.leftChild;
+		}
+		return current;
+
+	}
+	private AVLNode avlLastItem() {
+
+		return null; // right most item
+	}
+	private int getHeight(AVLNode node) {
+		if (node == null)
+			return 0;
+		return node.height;
+	}
+
+	// returns the new highest node (new parent)
+	private AVLNode avlRotateLeft(AVLNode node) {
+		// rotates the right node to become the parent
+		AVLNode original = node;
+		AVLNode right = original.rightChild;
+
+		assert right != null : "Right child is NULL on a left rotation";
+
+		original.rightChild = right.leftChild;
+		right.leftChild = original;
+
+
+		original.updateHeight();
+		right.updateHeight();
+
+		return right;
+	}
+
+	private AVLNode avlRotateRight(AVLNode node) {
+		// rotates the left node to become the parent
+		AVLNode original = node;
+		AVLNode left = original.leftChild;
+
+		assert left != null : "left child is NULL on a right rotation";
+
+		original.leftChild = left.rightChild;
+		left.rightChild = original;
+
+		original.updateHeight();
+		left.updateHeight();
+
+		return left;
+	}
+
+	// **** DEBUGGING METHODS ****
+	private void printLeftRight(AVLNode node) {
+		// preorder i think
+		if (node == null)
+			return;
+		
+		printLeftRight(node.leftChild);
+		System.out.println(node);
+
+		printLeftRight(node.rightChild);
+	}
+
+	private int getMaxHeight(AVLNode node) {
+		if (node == null)
+			return 0;
+		int childmx =  Math.max(getMaxHeight(node.leftChild), getMaxHeight(node.rightChild));
+		node.updateHeight();
+		return Math.max(node.height, childmx);
+	}
+	
+	private static CacheItem<String, String> genCacheItem(String a, String b, Long k) {
+		return new CacheItem<String, String>(a,b,k);
+	}
+	private int getMinLeafHeight(AVLNode node, int d) {
+		if (node == null) {
+			return 694206942;
+		}
+		if (node.leftChild == null && node.rightChild == null) {
+			return d;
+		}
+		return Math.min(getMinLeafHeight(node.leftChild, d + 1), getMinLeafHeight(node.rightChild, d + 1));
+	}
+	private boolean checkBalance(AVLNode node) {
+		if (node == null)
+			return true;
+
+		boolean ret = true;
+		ret &= checkBalance(node.leftChild) & checkBalance(node.rightChild);
+		node.updateHeight();
+		int bf = node.getBalanceFactor();
+		return (bf >= -2 && bf <= 2);
+	}
+	// END OF **** DEBUGGING METHODS ****
+
+	private class AVLNode {
+		CacheItem<K, V> data;
+		AVLNode leftChild, rightChild;
+		int height = 1;
+		AVLNode(CacheItem<K, V> data) {
+			this.data = data;
+		}
+		void updateHeight() {
+			height = 1 + Math.max((leftChild == null)?0:leftChild.height, (rightChild == null)?0:rightChild.height);
+		}
+		int getBalanceFactor() {
+			return (rightChild == null?0:rightChild.height) - (leftChild==null?0:leftChild.height);
+		}
+		String idString() {
+			return getClass().getName() + '@' + Integer.toHexString(hashCode());
+		}
+		public String toString() {
+			String lString = (leftChild == null)?"null":leftChild.idString();
+			String rString = (rightChild==null)?"null":rightChild.idString();
+
+			String ret = idString() + " " + data + " left: " + lString + " right: " + rString + " h: " + height + " bf: " + getBalanceFactor();
+			return ret;
+		}
 	}
 
 
+	// to be 100% honest i have no clue how to test this thing with assert statements because that seems like
+	// massive ass to have to keep references and work through it by hand and HARDCODE every assert
+	// ill do it by hand 100 times thank you very much 
+
+
+	// random vs ordered addition seems like its within 1 height
+	public static void test2() {
+		Cache<String, String> testCache = new Cache<String, String>();
+		Cache<String, String> testCache2 = new Cache<String, String>();
+
+		HashSet<String> used = new HashSet<String>();
+		int sz = 1000;
+		for (int i=0;i<sz;i++) {
+			testCache.insert(Integer.toString(i), "hi");
+		}
+		System.out.println("done with inorder");
+		int cnt = 0;
+		while (cnt < sz) {
+			String k = Integer.toString((int)(Math.random() * 1e9));
+			if (used.contains(k))
+				continue;
+			used.add(k);
+			testCache2.insert(k,"hi");
+			cnt++;
+		}
+
+		System.out.println("Max height is (1) " + testCache.getMaxHeight(testCache.root) + " " + testCache.getMinLeafHeight(testCache.root,0));
+		testCache.printLeftRight(testCache.root);
+		// System.out.println(testCache.root);
+		System.out.println(testCache.checkBalance(testCache.root));
+
+		System.out.println("Mad x height is (2) " + testCache2.getMaxHeight(testCache2.root));
+		// testCache2.printLeftRight(testCache2.root);
+		System.out.println(testCache2.checkBalance(testCache2.root));
+
+
+		for (int i=0;i<sz;i++) {
+			testCache.remove(Integer.toString(i));
+			System.out.println("" + testCache.checkBalance(testCache.root) + " : " + testCache.getMaxHeight(testCache.root));
+		}
+		for (String s : used) {
+			testCache2.remove(s);
+			System.out.println(s+" " + testCache2.checkBalance(testCache2.root) + " : " + testCache2.getMaxHeight(testCache2.root));
+		}
+	}
+	public static void test1() {
+		Cache<String, String> testCache = new Cache<String, String>();
+
+		var a = genCacheItem("hi", "fred", 1L);
+		var b = genCacheItem("carl", "fred", 2L);
+
+		System.out.println(a + "\n" + b);
+		// testCache.avlInsert(testCache.root, a);
+		// testCache.avlInsert(testCache.root, b);
+		testCache.insert("hi", "fred");
+		System.out.println("ROOT: " + testCache.root);
+
+		testCache.insert("bbc", "carl");
+		System.out.println("ROOT: " + testCache.root);
+
+		testCache.insert("ASDASD", "asd");
+		System.out.println("ROOT: " + testCache.root);
+
+		testCache.insert("coolio", "a");
+		System.out.println("ROOT: " + testCache.root);
+
+		testCache.printLeftRight(testCache.root);
+		System.out.println("ROOT: " + testCache.root);
+	}
 	public static void main(String[] args) {
-		Cache<String, Integer> thing = new Cache<String, Integer>();
-		String s = "AJSLDKASJDK";
-		String k = "JJJJJ";
-		thing.add(s, 69);
-		thing.add(k, 40);
-		String[] arr = new String[30];
-		for (int i=0;i<20;i++) {
-			arr[i] = String.valueOf((int)(Math.random() * 10000 + 1));
-			thing.add(arr[i], (int)(Math.random() * 50 + 1));
-		}
+		// test1();
+		test2();
 
-		System.out.println("ASJDLKAS");
+
 	}
+
 }
+
