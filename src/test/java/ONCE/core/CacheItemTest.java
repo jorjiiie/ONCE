@@ -16,6 +16,12 @@ public class CacheItemTest {
 		assertEquals(pizza.equals(pizza), true);
 
 		assertEquals((calzone.compareTo(pizza) < 0), true);
+
+
+		CacheItem<String, String> asj = new CacheItem<>("999", "hi", 50L);
+		CacheItem<String, String> akd = new CacheItem<>("000", "hi", 1L);
+
+		assertEquals((asj.compareTo(akd)) < 0, false);
 	}
 
 }

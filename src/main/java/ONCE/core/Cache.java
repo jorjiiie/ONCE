@@ -1,4 +1,4 @@
-// package ONCE.core;
+package ONCE.core;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -9,9 +9,12 @@ import java.util.HashSet;
 // must be threadsafe as well
 class Cache<K extends Comparable<? super K>, V> {
 
-    private static final int CACHE_LIMIT = 10;
+    private static final int CACHE_LIMIT = 100;
 
-	private ConcurrentHashMap<K, CacheItem<K, V> > references = new ConcurrentHashMap<K, CacheItem<K, V> >();
+	private ConcurrentHashMap<K, CacheItem<K, V> > references = new ConcurrentHashMap<>();
+
+	// GRAB A LOCK PLEASE
+
 	private AVLNode root;
 	private int avlSize = 0;
 
@@ -37,20 +40,24 @@ class Cache<K extends Comparable<? super K>, V> {
 		// query in logn
 		CacheItem<K, V> lookup = references.get(key);
 
+		if (lookup == null)
+			return null;
 		AVLNode cacheHit = avlQuery(lookup);
 
-		if (cacheHit == null)
-			return null;
+		assert cacheHit != null : "cachehit was somehow null";
 
-		// avlRemove(cacheHit);
-		cacheHit.data.priority++;
-		root = avlInsert(root, cacheHit.data);
+		remove(cacheHit);
 
-		return cacheHit.data.value;
+		lookup.priority++;
+
+		root = avlInsert(root, lookup);
+
+		return lookup.value;
 	}
 	public void insert(K key, V value) {
 		// this is only called if the cache query misses
-		CacheItem<K, V> item = new CacheItem<K, V>(key, value, 1L);
+
+		CacheItem<K, V> item = new CacheItem<>(key, value, 1L);
 
 		root = avlInsert(root, item);
 		references.put(key, item);
@@ -59,19 +66,22 @@ class Cache<K extends Comparable<? super K>, V> {
 			return;
 		}
 
-		/*
+		
 		AVLNode firstNode = avlFirstItem(root);
 		references.remove(firstNode.data.key);
-		avlRemove(root, firstNode);
-		*/
+		remove(firstNode);
+		
 		
 	}
 	// not public since this should not be called from the outside
-	private void remove(K key) {
+	private void remove(K key, V val) {
 		// for testing all things are 1 priority, so will create a cache item <k, "hi", 1L>
-		CacheItem<K, V> lookup = new CacheItem<K,V>(key, null, 1L);
+		CacheItem<K, V> lookup = new CacheItem<K, V>(key, val, 1L);
 
 		root = avlRemove(root, lookup);
+	}
+	private void remove(AVLNode node) {
+		root = avlRemove(root, node.data);
 	}
 
 	// helper for avlInsert and avlRemove
@@ -80,7 +90,6 @@ class Cache<K extends Comparable<? super K>, V> {
 		
 		int bf = node.getBalanceFactor();
 
-		// System.out.println(bf);
 		// if bf != +/- 2 then I messed up somewhere 
 		assert (bf >= -2 && bf <= 2) : "balance factor is screwed up";
 
@@ -145,8 +154,6 @@ class Cache<K extends Comparable<? super K>, V> {
 		int res = item.compareTo(node.data);
 		if (res == 0) {
 			if (node.leftChild == null) {
-				// just return the right child as it has taken its parents place
-				// if both just return null regardless
 				avlSize--;
 				return node.rightChild;
 
@@ -245,6 +252,7 @@ class Cache<K extends Comparable<? super K>, V> {
 	}
 	private int getMinLeafHeight(AVLNode node, int d) {
 		if (node == null) {
+			// potentially cause bugs but who cares
 			return 694206942;
 		}
 		if (node.leftChild == null && node.rightChild == null) {
@@ -261,6 +269,16 @@ class Cache<K extends Comparable<? super K>, V> {
 		node.updateHeight();
 		int bf = node.getBalanceFactor();
 		return (bf >= -2 && bf <= 2);
+	}
+	private boolean checkIntegrity(AVLNode node) {
+		if (node == null)
+			return true;
+		if (node.data == null) {
+			return false;
+		}
+		if (node.data.key == null || node.data.value == null || node.data.priority == null)
+			return false;
+		return checkIntegrity(node.rightChild) && checkIntegrity(node.leftChild);
 	}
 	// END OF **** DEBUGGING METHODS ****
 
@@ -293,15 +311,61 @@ class Cache<K extends Comparable<? super K>, V> {
 	// to be 100% honest i have no clue how to test this thing with assert statements because that seems like
 	// massive ass to have to keep references and work through it by hand and HARDCODE every assert
 	// ill do it by hand 100 times thank you very much 
+	public static void test4() {
+		// debugging test
+		Cache<String, String> testCache = new Cache<String, String>();
+		HashSet<String> used = new HashSet<String>();
 
+		int sz = 1000;
+		int cnt = 0;
+		while (cnt < sz) {
+			String k = Integer.toString((int)(Math.random() * sz*100));
+			if (used.contains(k))
+				continue;
+			used.add(k);
+			testCache.insert(k,"hi");
+			cnt++;		
+			System.out.println("AJSKDLJASKLDJAKLSDJALSD\n");
+		}
+		System.out.println(testCache.checkIntegrity(testCache.root));
+		for (String s : used) {
+			testCache.remove(s, "hi");
+			System.out.println(s+" " + testCache.checkBalance(testCache.root) + " : " + testCache.getMaxHeight(testCache.root));
+		}
+		// testCache.printLeftRight(testCache.root);
+	}
+	public static void test3() {
+		// access test (queries + updating priorities)
+		Cache<String, String> testCache = new Cache<String, String>();
+		HashSet<String> used = new HashSet<String>();
+
+		int sz = 1000;
+		int cnt = 0;
+		while (cnt < sz) {
+			String k = Integer.toString((int)(Math.random() * sz*100));
+			if (used.contains(k))
+				continue;
+			used.add(k);
+			testCache.insert(k,"hi");
+			cnt++;		
+			for (int i=0;i<500;i++) {
+				String k2 = Integer.toString((int)(Math.random() * 1e5));
+				testCache.query(k2);
+			}
+		}
+		testCache.printLeftRight(testCache.root);
+	}
 
 	// random vs ordered addition seems like its within 1 height
 	public static void test2() {
+		// speed test
 		Cache<String, String> testCache = new Cache<String, String>();
 		Cache<String, String> testCache2 = new Cache<String, String>();
 
 		HashSet<String> used = new HashSet<String>();
+
 		int sz = 1000;
+		
 		for (int i=0;i<sz;i++) {
 			testCache.insert(Integer.toString(i), "hi");
 		}
@@ -317,29 +381,34 @@ class Cache<K extends Comparable<? super K>, V> {
 		}
 
 		System.out.println("Max height is (1) " + testCache.getMaxHeight(testCache.root) + " " + testCache.getMinLeafHeight(testCache.root,0));
-		testCache.printLeftRight(testCache.root);
+		// testCache.printLeftRight(testCache.root);
 		// System.out.println(testCache.root);
 		System.out.println(testCache.checkBalance(testCache.root));
 
-		System.out.println("Mad x height is (2) " + testCache2.getMaxHeight(testCache2.root));
+		System.out.println("Max height is (2) " + testCache2.getMaxHeight(testCache2.root));
 		// testCache2.printLeftRight(testCache2.root);
 		System.out.println(testCache2.checkBalance(testCache2.root));
 
 
+		// this does not work if sz > cache_limit, so be aware of that since we assume it is there
+		
 		for (int i=0;i<sz;i++) {
-			testCache.remove(Integer.toString(i));
+			testCache.remove(Integer.toString(i), "hi");
 			System.out.println("" + testCache.checkBalance(testCache.root) + " : " + testCache.getMaxHeight(testCache.root));
 		}
+		int found = 0;
 		for (String s : used) {
-			testCache2.remove(s);
+			found += (testCache2.avlQuery(testCache2.references.get(s))==null)?0:1;
+			testCache2.remove(s, "Hi");
 			System.out.println(s+" " + testCache2.checkBalance(testCache2.root) + " : " + testCache2.getMaxHeight(testCache2.root));
 		}
+		System.out.println("hits : " + found);
 	}
 	public static void test1() {
-		Cache<String, String> testCache = new Cache<String, String>();
+		Cache<String, String> testCache = new Cache<>();
 
-		var a = genCacheItem("hi", "fred", 1L);
-		var b = genCacheItem("carl", "fred", 2L);
+		CacheItem<String, String> a = genCacheItem("hi", "fred", 1L);
+		CacheItem<String, String> b = genCacheItem("carl", "fred", 2L);
 
 		System.out.println(a + "\n" + b);
 		// testCache.avlInsert(testCache.root, a);
@@ -361,7 +430,9 @@ class Cache<K extends Comparable<? super K>, V> {
 	}
 	public static void main(String[] args) {
 		// test1();
-		test2();
+		// test2();
+		test3();
+		// test4();
 
 
 	}
