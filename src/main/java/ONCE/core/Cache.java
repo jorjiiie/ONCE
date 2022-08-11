@@ -1,5 +1,9 @@
 package ONCE.core;
+
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
+
 
 
 // for testing
@@ -9,17 +13,26 @@ import java.util.HashSet;
 // must be threadsafe as well
 class Cache<K extends Comparable<? super K>, V> {
 
-    private static final int CACHE_LIMIT = 100;
+    private final int CACHE_LIMIT;
 
 	private ConcurrentHashMap<K, CacheItem<K, V> > references = new ConcurrentHashMap<>();
 
-	// GRAB A LOCK PLEASE
+	private ReentrantReadWriteLock lockPair = new ReentrantReadWriteLock();
+	private Lock readLock = lockPair.readLock();
+	private Lock writeLock = lockPair.writeLock();
 
 	private AVLNode root;
 	private int avlSize = 0;
 
-	public Cache() {};
+	public Cache() {
+		CACHE_LIMIT = 100;
+	}
+
+	public Cache(int k) {
+		CACHE_LIMIT = k;
+	} 
 	
+	// grab the read lock BEFORE doing this
 	public AVLNode avlQuery(CacheItem<K, V> item) {
 		AVLNode currentNode = root;
 		while (currentNode != null) {
@@ -42,7 +55,13 @@ class Cache<K extends Comparable<? super K>, V> {
 
 		if (lookup == null)
 			return null;
-		AVLNode cacheHit = avlQuery(lookup);
+		AVLNode cacheHit;
+		try {
+			readLock.lock();
+			cacheHit = avlQuery(lookup);
+		} finally {
+			readLock.unlock();
+		}
 
 		assert cacheHit != null : "cachehit was somehow null";
 
@@ -50,7 +69,12 @@ class Cache<K extends Comparable<? super K>, V> {
 
 		lookup.priority++;
 
-		root = avlInsert(root, lookup);
+		try {
+			writeLock.lock();
+			root = avlInsert(root, lookup);
+		} finally {
+			writeLock.unlock();
+		}
 
 		return lookup.value;
 	}
@@ -59,16 +83,28 @@ class Cache<K extends Comparable<? super K>, V> {
 
 		CacheItem<K, V> item = new CacheItem<>(key, value, 1L);
 
-		root = avlInsert(root, item);
+		try {
+			writeLock.lock();
+			root = avlInsert(root, item);
+		} finally {
+			writeLock.unlock();
+		}
+
 		references.put(key, item);
 
 		if (avlSize <= CACHE_LIMIT) {
 			return;
 		}
-
+		AVLNode firstNode;
+		try {
+			readLock.lock();
+			firstNode = avlFirstItem(root); 
+		} finally {
+			readLock.unlock();
+		}
 		
-		AVLNode firstNode = avlFirstItem(root);
 		references.remove(firstNode.data.key);
+
 		remove(firstNode);
 		
 		
@@ -78,10 +114,20 @@ class Cache<K extends Comparable<? super K>, V> {
 		// for testing all things are 1 priority, so will create a cache item <k, "hi", 1L>
 		CacheItem<K, V> lookup = new CacheItem<K, V>(key, val, 1L);
 
-		root = avlRemove(root, lookup);
+		try {
+			writeLock.lock();
+			root = avlRemove(root, lookup);
+		} finally {
+			writeLock.unlock();
+		}
 	}
 	private void remove(AVLNode node) {
-		root = avlRemove(root, node.data);
+		try {
+			writeLock.lock();
+			root = avlRemove(root, node.data);
+		} finally {
+			writeLock.unlock();
+		}
 	}
 
 	// helper for avlInsert and avlRemove

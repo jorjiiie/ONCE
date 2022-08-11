@@ -8,4 +8,5 @@ ryan\ testing/*
 build/*
 dist/*
 target/*
+.idea/*
 *.sublime-build
