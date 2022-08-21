@@ -10,3 +10,6 @@ dist/*
 target/*
 .idea/*
 *.sublime-build
+.classpath
+.project
+.settings/*
