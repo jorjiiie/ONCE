@@ -14,6 +14,7 @@ public class Transaction implements Serializable {
 	// should be final but i made pretty bad design choices earlier lol
 	// can use the sha256 hash of the bigint as a string lol?
 	// yes lol i think that would be just better, although sender still has to be in biginteger form (but its aids to read otherwise)
+	// eventually develop a scripting language lmfao
 	private BigInteger reciever, sender;
 	// public key of sender
 	private BigInteger pubKey;

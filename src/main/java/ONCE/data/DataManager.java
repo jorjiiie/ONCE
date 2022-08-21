@@ -19,13 +19,15 @@ import java.io.Serializable;
 // public interface to use data manging - this automatically handles caching + reading off disk
 public class DataManager<K extends Comparable<? super K>, V extends Serializable> {
 
-	private static String DATA_PATH = System.getProperty("user.dir") + "/ONCE_DATA/";
-	
+	private static final String DATA_PATH = System.getProperty("user.dir") + "/ONCE_DATA/";
+	public static final String DEFAULT_EXTENSION = ".once";
+
+
 	private Cache<K,V> cache = new Cache<>(1);
 
 	// program should check if its the only file in the directory? - on startup! !!!
 	private final String path;
-
+	private final String extension;
 	public DataManager() {
 		path = DATA_PATH + "trash/";
 		File f = new File(path);
@@ -36,11 +38,13 @@ public class DataManager<K extends Comparable<? super K>, V extends Serializable
 			// potentially delete everything
 			System.out.println(file);
 		}
+		extension = DEFAULT_EXTENSION;
 	}
 
 	public DataManager(String s) {
 		path = DATA_PATH+s+ "/";
 		new File(path).mkdirs();
+		extension = DEFAULT_EXTENSION;
 	}
 
 	public String getPath() {
@@ -64,12 +68,12 @@ public class DataManager<K extends Comparable<? super K>, V extends Serializable
 		}
 		// find it in the thing
 
-		File data_file = new File(path+key.toString());
+		File data_file = new File(path+key.toString()+extension);
 
 		if (data_file.exists() == false) {
 			// i dont think this is an error but ill keep for nwo
 			// ex when disconnected for a while & catching up to date
-			Logging.log("ERROR: " + path+key.toString() + " DOES NOT EXIST");
+			Logging.log("ERROR: " + path+key.toString()+extension + " DOES NOT EXIST");
 			return null;
 		}
 
@@ -104,7 +108,7 @@ public class DataManager<K extends Comparable<? super K>, V extends Serializable
 
 		cache.insert(key, value);
 
-		File data_file = new File(path+key.toString());
+		File data_file = new File(path+key.toString()+extension);
 
 		try {
 			DataStream fileOut = new BuiltinObjectStream();

@@ -12,7 +12,7 @@ import java.util.HashSet;
 // can just use treeset tbh but im missing a few braincells
 class Cache<K extends Comparable<? super K>, V> {
 
-	public static final int DEFAULT_CACHE_LIMIT 1000;
+	public static final int DEFAULT_CACHE_LIMIT = 1000;
     private final int CACHE_LIMIT;
 
 	private ConcurrentHashMap<K, CacheItem<K, V> > references = new ConcurrentHashMap<>();

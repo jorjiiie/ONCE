@@ -15,6 +15,9 @@ import java.io.Serializable;
  * Better guess = near constant since branching events are uncommon, however, the "low" level branches will end up occupying a lot of computational power due to the necessary check (even if the branch is 1 block long)
  * so if the blockchain grows to large scales it'll get screwed (not awful but just kind of unnecessary)
  * at a branch the old branch skips straight to the previous junction but the new branch will require a manufacturing of a new junction and has to jump from (any branch n > 1) branch -> new junction -> previous junction and the first branch is always first branch -> old junction
+ * 
+ * this kind of does have a fat storage footprint if we make it persistent bc to branch at any one point we need to keep track of each of the things anyways
+ * essentially trading storage for the performance (probably performance is a better hit to take but it doesn't rlly matter lol we can just switch it to not be accumulative)
  */
 public class BalanceSheet implements Serializable {
 	private String branchHash;
@@ -27,5 +30,9 @@ public class BalanceSheet implements Serializable {
 
 	public void setPreviousSheet(String junction) {
 		junctionHash = junction;
+	}
+
+	public void extendPreviousSheet(BalanceSheet previous) {
+		previous.balances.forEach((k, v) -> balances.merge(k, v, BigInteger::add));
 	}
 }
