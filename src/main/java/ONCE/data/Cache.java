@@ -1,4 +1,4 @@
-package ONCE.core;
+package ONCE.data;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -12,6 +12,7 @@ import java.util.HashSet;
 // can just use treeset tbh but im missing a few braincells
 class Cache<K extends Comparable<? super K>, V> {
 
+	public static final int DEFAULT_CACHE_LIMIT 1000;
     private final int CACHE_LIMIT;
 
 	private ConcurrentHashMap<K, CacheItem<K, V> > references = new ConcurrentHashMap<>();
@@ -24,7 +25,7 @@ class Cache<K extends Comparable<? super K>, V> {
 	private int avlSize = 0;
 
 	public Cache() {
-		CACHE_LIMIT = 100;
+		CACHE_LIMIT = DEFAULT_CACHE_LIMIT;
 	}
 
 	public Cache(int k) {
@@ -91,6 +92,7 @@ class Cache<K extends Comparable<? super K>, V> {
 
 		references.put(key, item);
 
+		// we may get stuck in a loop where no new keys can be added but its highly unlikely i pray (one can be stuck though so its a bit problematic due to sorting)
 		if (avlSize <= CACHE_LIMIT) {
 			return;
 		}

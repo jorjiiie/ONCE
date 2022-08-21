@@ -17,3 +17,10 @@ ONCE, the coolest cryptocurrency
 
 * It's got some pretty sick networking (I implemented it but its likely garbage)
 * I implemented the RSA by hand (a security vulnerability tbh)
+
+
+# TODO list (I will get around to these eventually!)
+
+* custom serialization protocol for disk read/writes and network communications (which will use the same serialization format)
+* better logging with option to silence logging for once (L)
+* delete this project

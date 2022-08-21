@@ -1,4 +1,4 @@
-package ONCE.core;
+package ONCE.data;
 
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
