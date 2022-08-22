@@ -27,8 +27,13 @@ public class BalanceSheet implements Serializable {
 		branchHash = branch;
 
 	}
+	public BalanceSheet(String branch, Block block) {
 
-	public void setPreviousSheet(String junction) {
+	}
+	public String getJunctionSheet() {
+		return junctionHash;
+	}
+	public void setJunctionSheet(String junction) {
 		junctionHash = junction;
 	}
 

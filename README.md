@@ -24,3 +24,7 @@ ONCE, the coolest cryptocurrency
 * custom serialization protocol for disk read/writes and network communications (which will use the same serialization format)
 * better logging with option to silence logging for once (L)
 * delete this project
+
+# FAQ (what is this project actualy for)
+
+* this project is obviously useless but its an excuse for me to do whatever I want that seems interesting, so far I've implemented a p2p networking "module", a cache system that holds n objects with O(n) memory and O(logn) queries/adds (avl tree lol) and has priorities that get updated (priority = # of queries while active), a generic data manager that is a essentially a disk based map with said cache, and in the future i will roll this out to a generalized serialization so its a better disk-based map (the issue is that each entry gets its own file and no collisions are allowed), hand implemented RSA (tbh not that hard but still cool), a very very bad cryptocurrency that probably doesnt even qualify as a cryptocurrency (literally just a public ledger with SHA-256)
