@@ -1,5 +1,7 @@
 package ONCE.data;
 
+import ONCE.core.*;
+
 import java.math.BigInteger;
 
 import java.util.HashMap;
@@ -22,13 +24,18 @@ import java.io.Serializable;
 public class BalanceSheet implements Serializable {
 	private String branchHash;
 	private String junctionHash;
+	// technically should be coinimplementation but whatever
 	private HashMap<String, BigInteger> balances;
 	public BalanceSheet(String branch) {
 		branchHash = branch;
-
 	}
 	public BalanceSheet(String branch, Block block) {
-
+		// put the blocks transactions into it
+		Transaction[] transactions = block.getTransactions();
+		for (Transaction tx : transactions) {
+			// balances.compute(tx.getSender(), (k,v) -> (v==null) ? -tx.getAmount() : v - tx.getAmount());
+			// balances.compute(tx.getReciever(), (k,v) -> (v==null) ? +tx.getAmount() : v + tx.getAmount());
+		}
 	}
 	public String getJunctionSheet() {
 		return junctionHash;

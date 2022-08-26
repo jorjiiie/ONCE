@@ -18,7 +18,7 @@ public class Transaction implements Serializable {
 	private BigInteger reciever, sender;
 	// public key of sender
 	private BigInteger pubKey;
-	private long amount;
+	private CoinImplementation amount;
 	private BigInteger signature;
 	private long id; // generates random number on sign, client will check whether or not that identifier has been used already
 	// just use a timestamp ()
@@ -28,12 +28,12 @@ public class Transaction implements Serializable {
 	public Transaction(BigInteger _reciever, BigInteger _sender, long amt) {
 		reciever = _reciever;
 		sender = _sender;
-		amount = amt;
+		amount = new CoinImplementation(amt);
 	}
 	public Transaction(BigInteger reciever, RSA sender, long amount) {
 		this.reciever = reciever;
 		this.sender = sender.getPublic();
-		this.amount = amount;
+		this.amount = new CoinImplementation(amount);
 		sign(sender);
 	}
 	public String toString() {
@@ -61,7 +61,7 @@ public class Transaction implements Serializable {
 	public BigInteger getSender() {
 		return sender;
 	}
-	public long getAmount() {
+	public CoinImplementation getAmount() {
 		return amount;
 	}
 

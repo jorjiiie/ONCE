@@ -1,6 +1,8 @@
 package ONCE.core;
 
 public class CoinImplementation {
+
+	public static final CoinImplementation ZERO = new CoinImplementation(0L);
 	private Long coins;
 
 	public CoinImplementation(Long n) {
@@ -22,6 +24,12 @@ public class CoinImplementation {
 	}
 	public boolean lessThanOrEquals(CoinImplementation other) {
 		return coins <= other.coins;
+	}
+	public String toString() {
+		return coins.toString();
+	}
+	public CoinImplementation negate() {
+		return new CoinImplementation(-coins);
 	}
 
 

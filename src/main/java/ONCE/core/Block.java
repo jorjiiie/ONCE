@@ -32,7 +32,7 @@ public class Block implements Serializable {
 
 	private long salt = 0;
 
-	private long timestamp;
+	private long timestamp=0;
 	private BigInteger miner;
 	private int depth;
 	private Random rand;

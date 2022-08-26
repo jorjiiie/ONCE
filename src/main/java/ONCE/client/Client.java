@@ -27,7 +27,7 @@ public class Client {
 	public static Client hostClient;
 	private RSA user;
 
-	private	Blockchain blockchain;
+	// private	Blockchain blockchain;
 
 	// so we can update protocol
 	public final int VERSION_NUMBER = 1;
@@ -45,7 +45,7 @@ public class Client {
 
 		hostClient = this;
 		
-		blockchain = new Blockchain();
+		// blockchain = new Blockchain();
 
 
 		miningManager = new MiningManager(this);
@@ -150,7 +150,7 @@ public class Client {
 	 * @param prev hash of previous block
 	 */
 	public void resetBlock(int depth, String prev) {
-		blockchain.resetWorkingTransactions();
+		// blockchain.resetWorkingTransactions();
 
 		currentBlock = new Block(null, user.getPublic(), depth);
 		currentBlock.setPrevious(highestBlock.getBlockHash());
@@ -162,6 +162,7 @@ public class Client {
 
 		// only propogate and add if not already there
 
+		/*
 		if (blockchain.queryBlock(b.getBlockHash()) == null) {
 			// we only add it is accepted!
 			if (blockchain.testAdd(b)) {
@@ -181,6 +182,7 @@ public class Client {
 			}
 			
 		}
+		*/
 
 	}
 
@@ -188,7 +190,7 @@ public class Client {
 	 * Prints balances of blockchain (testing func)
 	 */
 	public void printBalances() {
-		blockchain.printBalances();
+		// blockchain.printBalances();
 	}
 
 	/**
@@ -196,6 +198,7 @@ public class Client {
 	 * @param tx transaction to add
 	 */
 	public void addTransaction(Transaction tx) {
+		/*
 		if (blockchain.verifyWorkingTransaction(tx)) {
 
 			blockchain.addWorkingTransaction(tx);
@@ -205,10 +208,11 @@ public class Client {
 			Message msg = ObjectProtocol.generateTransactionMessage(tx);
 			connector.broadcastMessage(msg);
 		}
+		*/
 
 	}
 	public void printBlocks() {
-		blockchain.printBlocks();
+		// blockchain.printBlocks();
 	}
 	public static void main(String[] args) {
 		InetAddress addr = null;

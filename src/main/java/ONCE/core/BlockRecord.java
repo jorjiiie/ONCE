@@ -3,32 +3,31 @@ package ONCE.core;
 import java.io.Serializable;
 
 public class BlockRecord implements Serializable {
-	private Block block;
-	private int confirmations = 1;
-	private String firstChild = null;
+
+	Block block;
+	int children = 0;
+	BalanceSheet sheet;
 
 	public BlockRecord(Block b) {
 		block = b;
+		sheet = new BalanceSheet(block);
 	}
 	public BlockRecord(BlockRecord br) {
 		block = br.block;
-		confirmations = br.confirmations;
-		firstChild = br.firstChild;
+		children = br.children;
+		sheet = br.sheet;
 	}
 
-	public boolean hasChild(String s) {
-		if (firstChild == null || firstChild.equals(s)) {
-			firstChild = s;
-			return false;
-		}
-		return true;
+	public void addChildren() {
+		children++;
 	}
-	public boolean hasChild(Block b) {
-		return hasChild(b.getBlockHash());
+	public int getChildren() {
+		return children;
+	}
+	public void setJunction(BlockRecord prev) {
+		sheet.setJunctionSheet(prev.block.getBlockHash());
+		sheet.extendPreviousSheet(prev.sheet);
 	}
 
-	public void addConfirmation() {
-		confirmations++;
-	}
 
 }

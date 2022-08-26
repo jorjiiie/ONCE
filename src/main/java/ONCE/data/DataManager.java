@@ -70,28 +70,21 @@ public class DataManager<K extends Comparable<? super K>, V extends Serializable
 
 		File data_file = new File(path+key.toString()+extension);
 
-		if (data_file.exists() == false) {
-			// i dont think this is an error but ill keep for nwo
-			// ex when disconnected for a while & catching up to date
-			Logging.log("ERROR: " + path+key.toString()+extension + " DOES NOT EXIST");
+		if (data_file.exists() == false) 
 			return null;
-		}
+		
 
 		try {
+
 			DataStream fileIn = new BuiltinObjectStream();
 			fileIn.setInputStream(new FileInputStream(data_file));
-
 			res = fileIn.readObject();
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			Logging.log("wtf");
 		}
-		// insert into cache
 
-		// what the fuck why does this work im so confused
-		// unchecked
-
-		// this shouldnt be wrong lol but #yolo
 		if (res != null)
 			cache.insert(key, (V) res);
 		return res;
@@ -111,10 +104,11 @@ public class DataManager<K extends Comparable<? super K>, V extends Serializable
 		File data_file = new File(path+key.toString()+extension);
 
 		try {
+
 			DataStream fileOut = new BuiltinObjectStream();
 			fileOut.setOutputStream(new FileOutputStream(data_file));
-
 			fileOut.writeObject(value);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			Logging.log("Error writing value " + value + " to file " + data_file);

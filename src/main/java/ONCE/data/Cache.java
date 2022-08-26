@@ -11,10 +11,13 @@ import java.util.HashSet;
 
 // can just use treeset tbh but im missing a few braincells
 class Cache<K extends Comparable<? super K>, V> {
+	// can do LRU with a doublely linked list :sob:
 
 	public static final int DEFAULT_CACHE_LIMIT = 1000;
     private final int CACHE_LIMIT;
 
+    // this is so closely tied to the actual implementation that i have to essentially rewrite this whole thing for the doubly linked list one
+    // will test later
 	private ConcurrentHashMap<K, CacheItem<K, V> > references = new ConcurrentHashMap<>();
 
 	private ReentrantReadWriteLock lockPair = new ReentrantReadWriteLock();

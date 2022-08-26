@@ -14,6 +14,8 @@ import java.net.InetAddress;
  */
 
 public abstract class Protocol extends Thread {
+	
+	// protected Bridge bridge;
 	protected NetSocket socket;
 	protected boolean closed;
 
