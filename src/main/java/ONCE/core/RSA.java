@@ -17,7 +17,7 @@ public class RSA {
 	public RSA() {
 		//generate  keys
 		
-		Random rand = new Random();
+		Random rand = new Random(0);
 		BigInteger p,q, phi;
 		
 		// just to force RSA_E to be coprime with phi

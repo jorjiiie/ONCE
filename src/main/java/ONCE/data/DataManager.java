@@ -37,6 +37,7 @@ public class DataManager<K extends Comparable<? super K>, V extends Serializable
 		for (File file : files) {
 			// potentially delete everything
 			System.out.println(file);
+			file.delete();
 		}
 		extension = DEFAULT_EXTENSION;
 	}
@@ -94,6 +95,8 @@ public class DataManager<K extends Comparable<? super K>, V extends Serializable
 	// returns true if added sucessfully 
 	public boolean add(K key, V value) {
 
+		// this can fuck up if you recieve in succession - solution is to wait a few seconds before rebroadcasting
+		// should lock this tbh but whatever
 		Object obj = query(key);
 		if (obj != null) {
 			return false;

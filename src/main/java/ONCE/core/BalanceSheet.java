@@ -26,6 +26,7 @@ public class BalanceSheet implements Serializable {
 		branchHash = branch;
 	}
 	public BalanceSheet(Block block) {
+		// add a special transaction for +25
 		// put the blocks transactions into it
 		branchHash = block.getBlockHash();
 		Transaction[] transactions = block.getTransactions();
@@ -33,6 +34,7 @@ public class BalanceSheet implements Serializable {
 			balances.compute(tx.getSender(), (k,v) -> (v==null) ? tx.getAmount().negate() : v.addCoins(tx.getAmount().negate()));
 			balances.compute(tx.getReciever(), (k,v) -> (v==null) ? tx.getAmount() : v.addCoins(tx.getAmount()));
 		}
+		balances.compute(block.getMiner(), (k,v) -> (v==null) ? Block.BLOCK_REWARD : v.addCoins(Block.BLOCK_REWARD));
 	}
 	public String getJunctionSheet() {
 		return junctionHash;
@@ -42,10 +44,20 @@ public class BalanceSheet implements Serializable {
 	}
 
 	public void extendPreviousSheet(BalanceSheet previous) {
+		Logging.log("EXTENDING PREVIOUS @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 		if (previous.balances != null)
 			previous.balances.forEach((k, v) -> balances.merge(k, v, CoinImplementation::addCoins));
 	}
 	public CoinImplementation getChange(BigInteger addr) {
 		return balances.getOrDefault(addr, CoinImplementation.ZERO);
+	}
+	public String toString() {
+		String ret = "Junction:";
+		ret += junctionHash + "\n";
+		ret += "current: " + branchHash + "\n";
+		for (HashMap.Entry<BigInteger, CoinImplementation> bal : balances.entrySet()) {
+			ret+=bal.getKey().toString() + ": " + bal.getValue().toString() + "\n";
+		}
+		return ret;
 	}
 }

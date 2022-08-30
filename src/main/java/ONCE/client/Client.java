@@ -28,6 +28,7 @@ public class Client {
 	private RSA user;
 
 	// private	Blockchain blockchain;
+	private Blockchain bc;
 
 	// so we can update protocol
 	public final int VERSION_NUMBER = 1;

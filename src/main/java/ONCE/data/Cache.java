@@ -53,7 +53,9 @@ class Cache<K extends Comparable<? super K>, V> {
 		return null;
 	}
 	public V query(K key) {
-		// query in logn
+		// query in 
+		if (key == null)
+			return null;
 		CacheItem<K, V> lookup = references.get(key);
 
 		if (lookup == null)

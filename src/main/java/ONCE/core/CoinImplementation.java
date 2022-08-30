@@ -1,6 +1,7 @@
 package ONCE.core;
 
-public class CoinImplementation {
+import java.io.Serializable;
+public class CoinImplementation implements Serializable {
 
 	public static final CoinImplementation ZERO = new CoinImplementation(0L);
 	private Long coins;

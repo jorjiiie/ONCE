@@ -22,7 +22,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
              <!--  <mainClass>ONCE.client.Client</mainClass> -->
-             <mainClass>ONCE.data.DataManager</mainClass>
+             <mainClass>ONCE.core.Blockchain</mainClass>
             </manifest>
           </archive>
         </configuration>

@@ -22,7 +22,7 @@ public class Block implements Serializable {
 	public static final int MINING_DIFFICULTY = 0;
 	public static final String GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000";
 	public static final Block GENESIS_BLOCK = getGenesis();
-	public static final long BLOCK_REWARD = 25;
+	public static final CoinImplementation BLOCK_REWARD = new CoinImplementation(25L);
 
 	private String blockHeader;
 	private String blockHash, tHash, previousHash;
@@ -42,7 +42,7 @@ public class Block implements Serializable {
 	 * @return Gensis block (defined here)
 	 */
 	public static Block getGenesis() {
-		Block b = new Block(null, null, 0);
+		Block b = new Block(null, BigInteger.ZERO, 0);
 		b.previousHash = GENESIS_HASH;
 		b.setTimestamp(0);
 		// make this somewhat uniform, and you also need the blockchain catch up mechanisms so a node coming online will be caught up
